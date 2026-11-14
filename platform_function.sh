@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # OP编译
-# Copyright (c) 2019-2024 smallprogram
+# Copyright (c) 2019-2024 seaks
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File: wsl2op_function.sh
 # Description: WSL automatically compiles Openwrt script code
 
