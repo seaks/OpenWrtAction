@@ -30,9 +30,9 @@ immortalwrt_value='{
   #"DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
 #}'
 
-openwrt_platforms=(X86)
+#openwrt_platforms=(X86)
 immortalwrt_platforms=(X86)
-lede_platforms=(X86)
+#lede_platforms=(X86)
 
 matrix_json="["
 source_matrix_json="["
