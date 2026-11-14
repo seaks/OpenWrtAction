@@ -1,17 +1,17 @@
 #!/bin/bash
 # OP编译
-# Copyright (c) 2019-2022 smallprogram
+# Copyright (c) 2019-2022 seaks
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File: wsl2op.sh
 # Description: WSL automatically compiles Openwrt script code
 
 #--------------------⬇⬇⬇⬇环境变量⬇⬇⬇⬇--------------------
 # 路由默认IP地址
-routeIP=10.10.0.253
+routeIP=192.168.101.1
 # 编译环境中当前账户名字
 userName=$USER
 # 默认OpenWrtAction的Config文件夹中的config文件名
@@ -24,7 +24,7 @@ timer=15
 # 编译环境默认值，1为WSL2，2为非WSL2的Linux环境。不要修改这里
 sysenv=1
 # OpenWrtAction Git URL
-owaUrl=https://github.com/smallprogram/OpenWrtAction.git
+owaUrl=https://github.com/seaks/OpenWrtAction.git
 # 是否首次编译 0否，1是
 isFirstCompile=0
 # 是否Make Clean & Make DirClean
@@ -61,8 +61,8 @@ luci_apps=(
 # 编译结果变量
 is_complie_error=0
 #Git参数
-git_email=smallprogram@foxmail.com
-git_user=smallprogram
+git_email=seaks@foxmail.com
+git_user=seaks
 
 #--------------------⬇⬇⬇⬇各种函数⬇⬇⬇⬇--------------------
 
@@ -109,31 +109,31 @@ function Func_DIY_Script() {
     Func_LogMessage "\033[31m 下载安装默认背景 \033[0m" "\033[31m download and install default background \033[0m"
     rm -rf ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background
     mkdir -p ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld1.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld2.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld3.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video1.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video2.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video3.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video4.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video5.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/img/1.jpg
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld1.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld2.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld3.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video1.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video2.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video3.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video4.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video5.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon-mod/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/img/1.jpg
 
     rm -rf ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background
     mkdir -p ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld1.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld2.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/NetworkWorld3.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video1.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video2.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video3.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video4.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/video/video5.mp4
-    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/smallprogram/OpenWrtAction/raw/main/source/img/1.jpg
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld1.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld2.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/NetworkWorld3.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video1.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video2.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video3.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video4.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/video/video5.mp4
+    wget -P ./feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background https://github.com/seaks/OpenWrtAction/raw/main/source/img/1.jpg
 
     #Diy
     rm -rf ./feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status/index.htm
-    wget -P ./feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status https://github.com/smallprogram/OpenWrtAction/raw/main/source/openwrtfile/index.htm
+    wget -P ./feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_status https://github.com/seaks/OpenWrtAction/raw/main/source/openwrtfile/index.htm
     sleep 1s
 
     Func_LogMessage "\033[31m DIY脚本执行完成 \033[0m" "\033[31m DIY script execution completed \033[0m"
