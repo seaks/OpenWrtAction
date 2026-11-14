@@ -13,7 +13,7 @@
 
 <div align="center">
 
-[![Visitors](https://api.visitorbadge.io/api/combined?path=https%3A%2F%2Fgithub.com%2Fsmallprogram%2FOpenWrtAction&countColor=%2344cc11&style=flat-square)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2Fsmallprogram%2FOpenWrtAction) ![](https://img.shields.io/github/downloads/smallprogram/OpenWrtAction/total?style=flat-square) ![](https://img.shields.io/github/repo-size/smallprogram/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/release-date/smallprogram/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/last-commit/smallprogram/OpenWrtAction?style=flat-square) [![](https://img.shields.io/github/license/smallprogram/OpenWrtAction?style=flat-square)](https://github.com/smallprogram/OpenWrtAction/blob/main/LICENSE?style=flat-square)
+[![Visitors](https://api.visitorbadge.io/api/combined?path=https%3A%2F%2Fgithub.com%2Fseaks%2FOpenWrtAction&countColor=%2344cc11&style=flat-square)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2Fseaks%2FOpenWrtAction) ![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/total?style=flat-square) ![](https://img.shields.io/github/repo-size/seaks/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/release-date/seaks/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/last-commit/seaks/OpenWrtAction?style=flat-square) [![](https://img.shields.io/github/license/seaks/OpenWrtAction?style=flat-square)](https://github.com/seaks/OpenWrtAction/blob/main/LICENSE?style=flat-square)
 
 
 </div>
@@ -82,7 +82,7 @@
 ## ⚙️ WorkFlow
 |ActionStatus|Network Support|Latest Release|Latest Download|
 |-|-|-|-|
-|[![Build_Multi_Platform(V6)](https://github.com/smallprogram/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml/badge.svg)](https://github.com/smallprogram/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml)|![](https://img.shields.io/badge/-IPv4-green) ![](https://img.shields.io/badge/-IPv6-yellowgreen)|![GitHub release (with filter)](https://img.shields.io/github/v/release/smallprogram/OpenWrtAction)|[![GitHub release (latest by date)](https://img.shields.io/github/downloads/smallprogram/OpenWrtAction/latest/total?style=flat-square)](https://github.com/smallprogram/OpenWrtAction/releases/latest)|
+|[![Build_Multi_Platform(V6)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml/badge.svg)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml)|![](https://img.shields.io/badge/-IPv4-green) ![](https://img.shields.io/badge/-IPv6-yellowgreen)|![GitHub release (with filter)](https://img.shields.io/github/v/release/seaks/OpenWrtAction)|[![GitHub release (latest by date)](https://img.shields.io/github/downloads/seaks/OpenWrtAction/latest/total?style=flat-square)](https://github.com/seaks/OpenWrtAction/releases/latest)|
 
 
 ## 📥 Release Guide
@@ -228,7 +228,7 @@ CONFIG_PACKAGE_luci-theme-vantage=y
 
 ### 🚀 luci-app-ghfu
 
-You can directly update to the latest firmware from this repository via LuCI, thereby bypassing the tedious manual update process. For more details, please refer to https://github.com/smallprogram/openwrt-ghfu.
+You can directly update to the latest firmware from this repository via LuCI, thereby bypassing the tedious manual update process. For more details, please refer to https://github.com/seaks/openwrt-ghfu.
 
 ![alt text](pic/ghfu/en.png)
 
@@ -238,7 +238,7 @@ You can directly update to the latest firmware from this repository via LuCI, th
 ---
  
 ## 🔗 Quick Jump
-#### [🧭 Latest firmware list, click to get it](https://github.com/smallprogram/OpenWrtAction/tags)
+#### [🧭 Latest firmware list, click to get it](https://github.com/seaks/OpenWrtAction/tags)
 #### [🧭 R1 Soft Router Installation ESXi 8.0 Tutorial](R1_ESXI8.md)
 ---
 ## 📚 Related parameters
@@ -258,7 +258,7 @@ Before running, please make sure that your compilation environment has installed
 
 #### First execution
 ```shell
-git clone https://github.com/smallprogram/OpenWrtAction
+git clone https://github.com/seaks/OpenWrtAction
 cd OpenWrtAction
 bash wsl2op.sh
 ```
