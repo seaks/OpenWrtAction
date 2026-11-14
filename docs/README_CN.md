@@ -13,7 +13,7 @@
 
 <div align="center">
 
-[![Visitors](https://api.visitorbadge.io/api/combined?path=https%3A%2F%2Fgithub.com%2Fsmallprogram%2FOpenWrtAction&countColor=%2344cc11&style=flat-square)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2Fsmallprogram%2FOpenWrtAction) ![](https://img.shields.io/github/downloads/smallprogram/OpenWrtAction/total?style=flat-square) ![](https://img.shields.io/github/repo-size/smallprogram/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/release-date/smallprogram/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/last-commit/smallprogram/OpenWrtAction?style=flat-square) [![](https://img.shields.io/github/license/smallprogram/OpenWrtAction?style=flat-square)](https://github.com/smallprogram/OpenWrtAction/blob/main/LICENSE?style=flat-square)
+[![Visitors](https://api.visitorbadge.io/api/combined?path=https%3A%2F%2Fgithub.com%2Fseaks%2FOpenWrtAction&countColor=%2344cc11&style=flat-square)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2Fseaks%2FOpenWrtAction) ![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/total?style=flat-square) ![](https://img.shields.io/github/repo-size/seaks/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/release-date/seaks/OpenWrtAction?style=flat-square) ![](https://img.shields.io/github/last-commit/seaks/OpenWrtAction?style=flat-square) [![](https://img.shields.io/github/license/seaks/OpenWrtAction?style=flat-square)](https://github.com/seaks/OpenWrtAction/blob/main/LICENSE?style=flat-square)
 
 
 </div>
@@ -81,7 +81,7 @@
 ## ⚙️ 工作流
 |ActionStatus|Network Support|Latest Release|Latest Download|
 |-|-|-|-|
-|[![Build_Multi_Platform(V6)](https://github.com/smallprogram/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml/badge.svg)](https://github.com/smallprogram/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml)|![](https://img.shields.io/badge/-IPv4-green) ![](https://img.shields.io/badge/-IPv6-yellowgreen)|![GitHub release (with filter)](https://img.shields.io/github/v/release/smallprogram/OpenWrtAction)|[![GitHub release (latest by date)](https://img.shields.io/github/downloads/smallprogram/OpenWrtAction/latest/total?style=flat-square)](https://github.com/smallprogram/OpenWrtAction/releases/latest)|
+|[![Build_Multi_Platform(V6)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml/badge.svg)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml)|![](https://img.shields.io/badge/-IPv4-green) ![](https://img.shields.io/badge/-IPv6-yellowgreen)|![GitHub release (with filter)](https://img.shields.io/github/v/release/seaks/OpenWrtAction)|[![GitHub release (latest by date)](https://img.shields.io/github/downloads/seaks/OpenWrtAction/latest/total?style=flat-square)](https://github.com/seaks/OpenWrtAction/releases/latest)|
 
 
 
@@ -228,7 +228,7 @@ CONFIG_PACKAGE_luci-theme-vantage=y
 
 ### 🚀 luci-app-ghfu
 
-可通过luci直接更新该仓库的最新固件，省去手动更新的繁琐过程，详情参考 https://github.com/smallprogram/openwrt-ghfu
+可通过luci直接更新该仓库的最新固件，省去手动更新的繁琐过程，详情参考 https://github.com/seaks/openwrt-ghfu
 
 ![alt text](pic/ghfu/cn.png)
 
@@ -238,7 +238,7 @@ CONFIG_PACKAGE_luci-theme-vantage=y
 
 ## 🔗 快速跳转
 
-#### [🧭 最新固件列表，点击自取](https://github.com/smallprogram/OpenWrtAction/tags)
+#### [🧭 最新固件列表，点击自取](https://github.com/seaks/OpenWrtAction/tags)
 #### [🧭 R1软路由安装ESXi 8.0教程](R1_ESXI8.md)
 ---
 ## 📚 相关参数
@@ -258,7 +258,7 @@ CONFIG_PACKAGE_luci-theme-vantage=y
 
 #### 首次执行
 ```shell
-git clone https://github.com/smallprogram/OpenWrtAction
+git clone https://github.com/seaks/OpenWrtAction
 cd OpenWrtAction
 bash wsl2op.sh
 ```
