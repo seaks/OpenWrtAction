@@ -5,10 +5,20 @@ export repos=(
   "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main"
   "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git;main"
   "src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git;main"
-  "src-git helloworld https://github.com/fw876/helloworld;master"
   "src-git OpenClash https://github.com/vernesong/OpenClash;master"
   "src-git ghfu https://github.com/smallprogram/openwrt-ghfu.git;main"
-  "src-git accesspolicycontroller https://github.com/smallprogram/openwrt-access-policy-controller.git;main"
+  "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
+  "src-git helloworld https://github.com/fw876/helloworld.git;dev"
+  "src-git mosdns https://github.com/sbwml/luci-app-mosdns.git;v5"
+  "src-git bandix https://github.com/timsaya/luci-app-bandix.git;main"
+  "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
+  "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
+  "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
+  "src-git clashoo https://github.com/kenzok8/openwrt-clashoo.git"
+  "src-git daede https://github.com/kenzok8/openwrt-daede.git"
+  "src-git tower https://github.com/kenzok8/openwrt-tower.git"
+  "src-git honk https://github.com/kenzok8/openwrt-honk"
+  "src-git small https://github.com/kenzok8/small"
 )
 
 # 自定义软件包列表
@@ -103,9 +113,9 @@ cat << "EOF" > files/etc/uci-defaults/zz-set-default-theme
 # 强制覆写节点，不判断任何条件，设置默认主题
 
 # 设置默认主题为 Argon
-# uci set luci.themes.Argon=/luci-static/argon
-# uci set luci.main.mediaurlbase=/luci-static/argon
-# uci commit luci
+ uci set luci.themes.Argon=/luci-static/argon
+ uci set luci.main.mediaurlbase=/luci-static/argon
+ uci commit luci
 
 # 设置默认主题为 vantage
 # uci set luci.themes.Vantage=/luci-static/vantage
