@@ -2,15 +2,15 @@
 
 source_code_platforms=(openwrt immortalwrt lede)
 
-openwrt_value='{
-  "REPO_URL": "https://github.com/openwrt/openwrt.git",
-  "REPO_BRANCH": "openwrt-25.12",
-  "CONFIGS": "config/openwrt_config",
-  "DIY_P1_SH": "diy_script/openwrt_diy/diy-part1.sh",
-  "DIY_P2_SH": "diy_script/openwrt_diy/diy-part2.sh",
-  "DIY_P3_SH": "diy_script/openwrt_diy/diy-part3.sh",
-  "DIY_P4_SH": "diy_script/openwrt_diy/diy-part4.sh"
-}'
+#openwrt_value='{
+  #"REPO_URL": "https://github.com/openwrt/openwrt.git",
+  #"REPO_BRANCH": "openwrt-25.12",
+  #"CONFIGS": "config/openwrt_config",
+  #"DIY_P1_SH": "diy_script/openwrt_diy/diy-part1.sh",
+  #"DIY_P2_SH": "diy_script/openwrt_diy/diy-part2.sh",
+  #"DIY_P3_SH": "diy_script/openwrt_diy/diy-part3.sh",
+  #"DIY_P4_SH": "diy_script/openwrt_diy/diy-part4.sh"
+#}'
 
 immortalwrt_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
@@ -21,14 +21,14 @@ immortalwrt_value='{
   "DIY_P3_SH": "diy_script/immortalwrt_diy/diy-part3.sh"
 }'
 
-lede_value='{
-  "REPO_URL": "https://github.com/coolsnowwolf/lede",
-  "REPO_BRANCH": "master",
-  "CONFIGS": "config/lede_config",
-  "DIY_P1_SH": "diy_script/lean_diy/diy-part1.sh",
-  "DIY_P2_SH": "diy_script/lean_diy/diy-part2.sh",
-  "DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
-}'
+#lede_value='{
+  #"REPO_URL": "https://github.com/coolsnowwolf/lede",
+  #"REPO_BRANCH": "master",
+  #"CONFIGS": "config/lede_config",
+  #"DIY_P1_SH": "diy_script/lean_diy/diy-part1.sh",
+  #"DIY_P2_SH": "diy_script/lean_diy/diy-part2.sh",
+  #"DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
+#}'
 
 openwrt_platforms=(X86)
 immortalwrt_platforms=(X86)
