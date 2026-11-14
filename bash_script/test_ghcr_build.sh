@@ -29,11 +29,11 @@ echo "=== 3. 清理旧数据并拉取最新缓存 ==="
 rm -rf build_dir staging_dir
 docker rm -f temp_bin 2>/dev/null || true
 
-docker pull ghcr.io/smallprogram/openwrt-base-cache-immortalwrt-x86:latest
-docker create --name temp_bin ghcr.io/smallprogram/openwrt-base-cache-immortalwrt-x86:latest /bin/true
+docker pull ghcr.io/seaks/openwrt-base-cache-immortalwrt-x86:latest
+docker create --name temp_bin ghcr.io/seaks/openwrt-base-cache-immortalwrt-x86:latest /bin/true
 docker export temp_bin > cache_exported.tar
 docker rm -f temp_bin 2>/dev/null || true
-# docker rmi -f ghcr.io/smallprogram/openwrt-base-cache-immortalwrt-x86:latest 2>/dev/null || true
+# docker rmi -f ghcr.io/seaks/openwrt-base-cache-immortalwrt-x86:latest 2>/dev/null || true
 
 echo "=== 4. 解压并合并缓存分块 ==="
 rm -rf immcache
