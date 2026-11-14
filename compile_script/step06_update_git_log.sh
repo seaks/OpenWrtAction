@@ -15,7 +15,7 @@ ensure_log_trailing_newline() {
 }
 
 # 初始化 release.txt
-echo "[![](https://img.shields.io/github/downloads/smallprogram/OpenWrtAction/$release_tag/total?style=flat-square)](https://github.com/smallprogram/MyAction)"> release.txt
+echo "[![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/$release_tag/total?style=flat-square)](https://github.com/seaks/MyAction)"> release.txt
 
 echo "">> release.txt
 echo "## Source Code Information">> release.txt
