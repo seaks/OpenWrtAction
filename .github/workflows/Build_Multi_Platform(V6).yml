@@ -42,28 +42,31 @@ jobs:
     name: Init
     outputs:
       output_release_tag: ${{ steps.gen_release_tag.outputs.release_tag }}
-      platforms: ${{ steps.read-platforms.outputs.matrix }}
-      platforms_source: ${{ steps.read-platforms.outputs.source_matrix_json }}
+      platforms: ${{ steps.set_matrix.outputs.matrix }}
+      platforms_source: ${{ steps.set_matrix.outputs.source_matrix }}
     steps:
       - name: Generate Tag Name
         id: gen_release_tag
         run: |
-          echo "release_tag=multi-platform_$(TZ='Asia/Shanghai' date +"%Y.%m.%d_%H.%M.%S")" >> $GITHUB_OUTPUT
-
+          echo "release_tag=immortalwrt_x86_$(TZ='Asia/Shanghai' date +"%Y.%m.%d_%H.%M.%S")" >> $GITHUB_OUTPUT
       - name: Checkout
         uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Read Platforms From File
-        id: read-platforms
+      # 直接写死矩阵，仅 x86 immortalwrt‑25.12，跳过platforms.sh脚本
+      - name: Set fixed matrix only x86
+        id: set_matrix
         run: |
-          bash compile_script/platforms.sh
-  
+          cat >> $GITHUB_OUTPUT <<'EOF'
+matrix=[{"source_code_platform":"immortalwrt","platform":"x86","value":{"REPO_URL":"https://github.com/immortalwrt/immortalwrt","REPO_BRANCH":"openwrt-25.12","DIY_P1_SH":"DIY-1.sh","DIY_P2_SH":"DIY-2.sh","DIY_P3_SH":"DIY-3.sh","CONFIGS":"config"}}]
+source_matrix=[{"source_code_platform":"immortalwrt","value":{"REPO_URL":"https://github.com/immortalwrt/immortalwrt","REPO_BRANCH":"openwrt-25.12","DIY_P1_SH":"DIY-1.sh","DIY_P2_SH":"DIY-2.sh","DIY_P3_SH":"DIY-3.sh","CONFIGS":"config"}}]
+EOF
+
   job_source_init:
     needs: job_init
     runs-on: ubuntu-latest
-    name: Source-Init-${{ matrix.source_code_platform }}
+    name: Source‑Init‑${{ matrix.source_code_platform }}
     strategy:
       fail-fast: false
       matrix:
