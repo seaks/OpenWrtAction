@@ -1,0 +1,25 @@
+<details> <summary> <b>helloworld new commit log :rocket: </b> </summary>
+
+#### [:mega: Full Changelog. ](https://github.com/fw876/helloworld/compare/2abdc9aa9e19607774dc9789709212b70b8607c6...6fbc9f563c9e7cd3b65061fba13ffc62666066aa)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+6fbc9f5|coolsnowwolf|Fri Nov 13 11:16:43 2026 +0800|luci-app-ssr-plus: default to Xray and require timeout for all cores
+3e6fcaa|coolsnowwolf|Fri Nov 13 10:41:32 2026 +0800|xray-core: update to 26.11.9 and refresh patches
+e8efa31|coolsnowwolf|Tue Nov 10 10:08:59 2026 +0800|xray-core: disable cronet build when in non-x64 host os
+425d480|coolsnowwolf|Sun Nov 8 11:34:05 2026 +0800|luci-app-ssr-plus: remove NaiveProxy component updater
+c4a7226|zxl hhyccc|Fri Nov 6 22:58:32 2026 +0800|luci-app-ssr-plus: fix(clash): fix YAML generation defects for xhttp-opts.
+81c6320|coolsnowwolf|Wed Nov 4 18:55:30 2026 +0800|luci-app-ssr-plus: bump version to v198.3
+c66d5d3|zxl hhyccc|Tue Nov 3 23:40:07 2026 +0800|naiveproxy: update to 154.0.8037.49-5
+8b632b5|zxlhhyccc|Tue Nov 3 21:32:20 2026 +0800|luci-app-ssr-plus: add MASQUE support (Xray)
+b130d22|coolsnowwolf|Tue Nov 3 15:02:50 2026 +0800|mihomo: fix source mirror hash to avoid repeated rebuilds
+04fe559|coolsnowwolf|Sun Nov 1 00:53:31 2026 +0800|xray-core: update to 26.10.31 and harden EIP93 backend fallback
+aaef491|coolsnowwolf|Sat Oct 31 12:40:16 2026 +0800|mihomo: bump to 1.19.33 and support Linux 7.3 EIP93
+41959d1|coolsnowwolf|Sat Oct 31 00:20:20 2026 +0800|xray-core: update to 26.10.29 and refresh patches
+09afd16|coolsnowwolf|Thu Oct 29 21:23:25 2026 +0800|xray-core: support legacy and library GHASH EIP93 backends
+31b180d|zxlhhyccc|Sun Oct 25 10:57:08 2026 +0800|luci-app-ssr-plus: fix layer order of mkcp-legacy entries in Xray finalmask
+20756ea|coolsnowwolf|Sun Oct 25 00:44:18 2026 +0800|xray-core,mihomo: reuse UPX binaries during packaging
+
+
+</details>
