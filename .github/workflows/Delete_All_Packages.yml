@@ -1,10 +1,10 @@
 #
-# Copyright (c) 2019-2026 smallprogram
+# Copyright (c) 2019-2026 seaks
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File: .github/workflows/Delete_All_Packages.yml
 # Description: Delete all OpenWrt packages
 #
@@ -31,8 +31,8 @@ jobs:
     steps:
     - name: Delete all openwrt-* packages completely
       env:
-        GH_TOKEN: ${{ secrets.MY_SECRET_PAT }}
-        USERNAME: smallprogram
+        GH_TOKEN: ${{ secrets.openwrt }}
+        USERNAME: seaks
       run: |
         echo "获取所有容器包列表..."
         

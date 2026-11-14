@@ -1,10 +1,10 @@
 #
-# Copyright (c) 2022-2026 SMALLPROGRAM <https://github.com/smallprogram/OpenWrtAction>
+# Copyright (c) 2022-2026 seaks <https://github.com/seaks/OpenWrtAction>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # Description: Defconfig OpenWrt using GitHub Actions
 #
 
@@ -141,7 +141,7 @@ jobs:
 
           if ! git diff --cached --quiet; then
             git config user.name "smallprogram"
-            git config user.email "smallprogram@foxmail.com"
+            git config user.email "lei.seaks@gmail.com.com"
             git commit -m "[CI] Configuration: update code for ${{ matrix.source_code_platform }}"
 
             MAX_RETRIES=10

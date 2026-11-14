@@ -1,10 +1,10 @@
 #
-# Copyright (c) 2019-2026 smallprogram
+# Copyright (c) 2019-2026 seaks
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File: .github/workflows/Update_Checker.yml
 # Description: Source code update checker
 #
@@ -85,7 +85,7 @@ jobs:
         delete-untagged: true
         packages: openwrt-base-cache*
         expand-packages: true
-        token: ${{ secrets.MY_SECRET_PAT }}
+        token: ${{ secrets.openwrt }}
     
     - name: Stateful Lifecycle Check
       id: lifecycle_check
