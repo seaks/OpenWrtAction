@@ -321,6 +321,10 @@ jobs:
   job_compile_and_upload:
     needs: [job_init, job_source_init, job_generate_release_tag]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
     if: ${{ !cancelled() && needs.job_source_init.result == 'success' && needs.job_generate_release_tag.result == 'success' }}
     strategy:
       fail-fast: false
