@@ -25,40 +25,16 @@
 
 
 
-## 📥 Release Guide
-
-<table>
-  <tr>
-    <td width="75%" valign="top">
-      <p></p>
-      <p></p>
-      <p></p>
-      <p></p>
-    </td>
-    <td width="25%" valign="top">
-      <img src="pic/telegram.png" width="100%" alt="Telegram">
-    </td>
-  </tr>
-</table>
-
-
 ## 📚 相关参数
+
 ```
 1. 默认地址:`192.168.101.1`
 2. 默认账户:`root`
 3. 默认密码:`无`
 ```
 
+
 ## ❤️ 致谢
-
-感谢所有使用、反馈和贡献本项目的朋友们！
-
-特别鸣谢以下项目/社区为本项目提供了灵感与支持：
-
-- [openwrt](https://github.com/openwrt/openwrt.git)
-- [immortalwrt](https://github.com/immortalwrt/immortalwrt.git)
-- [lede](https://github.com/coolsnowwolf/lede)
-- 以及社区中的每一位热心用户 ❤️
   
 
 <p align="center">
