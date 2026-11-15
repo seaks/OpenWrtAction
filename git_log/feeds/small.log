@@ -1,5 +1,11 @@
 <details> <summary> <b>small new commit log :rocket: </b> </summary>
 
-<b>Initial commit log for small, no previous SHA.</b>
+#### [:mega: Full Changelog. ](https://github.com/kenzok8/small/compare/539eac08ab484fdc4bb06e234c2fdf9486ab0f87...9243fa21dc4ab472ca73145a709b22f6a9f6d5d2)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
 
+SHA|Author|Date|Message
+-|-|-|-
+9243fa21|action|Sun Nov 15 11:13:47 2026 +0800|🍭 luci-app-passwall2: sync upstream
+faa23e1d|action|Sun Nov 15 11:13:47 2026 +0800|🍭 luci-app-passwall: sync upstream
+06149e8e|action|Sun Nov 15 11:13:47 2026 +0800|🍭 geo2txt: update to 1.0.1
 </details>

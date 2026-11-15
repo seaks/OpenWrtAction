@@ -1,5 +1,9 @@
 <details> <summary> <b>openwrt-tower new commit log :rocket: </b> </summary>
 
-<b>Initial commit log for openwrt-tower, no previous SHA.</b>
+#### [:mega: Full Changelog. ](https://github.com/kenzok8/openwrt-tower/compare/6becb8c925c88172e97ac0f1d9ccb42de54189e4...d18d4dfd98eda5b4ef3d653f770683d32642a0b9)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
 
+SHA|Author|Date|Message
+-|-|-|-
+d18d4df|kenzok8|Sun Nov 15 12:43:10 2026 +0800|Keep VLESS encryption and REALITY spiderX through conversion
 </details>

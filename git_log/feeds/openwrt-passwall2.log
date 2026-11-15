@@ -1,9 +1,9 @@
 <details> <summary> <b>openwrt-passwall2 new commit log :rocket: </b> </summary>
 
-#### [:mega: Full Changelog. ](https://github.com/Openwrt-Passwall/openwrt-passwall2/compare/7aeb0aa4e10246115f6a568b5c69bca122c75794...dd77a236c7ee46b2b3899e1951668fdc88c13c57)  
+#### [:mega: Full Changelog. ](https://github.com/Openwrt-Passwall/openwrt-passwall2/compare/dd77a236c7ee46b2b3899e1951668fdc88c13c57...35d20ce6e9cc40138841c031954899fdefa765d7)  
 :heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
 
 SHA|Author|Date|Message
 -|-|-|-
-dd77a23|A-BO|Fri Nov 13 00:01:39 2026 +0800|luci: add proxy warm-up before node latency tests
+35d20ce|A-BO|Sun Nov 15 09:59:35 2026 +0800|luci: fix port allocation and node test startup races
 </details>
