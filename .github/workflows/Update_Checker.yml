@@ -76,7 +76,7 @@ jobs:
         delete_expired_data: 540
         delete_tags: true
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: ghcr.io cleanup action
       uses: dataaxiom/ghcr-cleanup-action@v1
@@ -85,7 +85,7 @@ jobs:
         delete-untagged: true
         packages: openwrt-base-cache*
         expand-packages: true
-        token: ${{ secrets.openwrt }}
+        token: ${{ github.token }}
     
     - name: Stateful Lifecycle Check
       id: lifecycle_check
