@@ -106,11 +106,6 @@ sed -i 's/192.168.1.1/10.10.0.253/g' package/base-files/files/bin/config_generat
 mkdir -p dl
 cp -r $PATCHES_SRC_DIR/library/* ./dl/
 
-# inject world-50m.json to banip data
-mkdir -p ./feeds/luci/applications/luci-app-banip/htdocs/luci-static/resources/view/banip/
-cp -a $PATCHES_SRC_DIR/diy_script/custom_packages/banip/world-50m.json ./feeds/luci/applications/luci-app-banip/htdocs/luci-static/resources/view/banip/
-
-
 # --- Modify SSH Configuration (Dropbear -> 2222, OpenSSH -> 22) ---
 
 # 1. 确保 files 目录存在 (在 OpenWrt 源码根目录下)
