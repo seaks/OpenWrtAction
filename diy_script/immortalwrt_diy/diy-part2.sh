@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Copyright (c) 2019-2025 SmallProgram <https://github.com/smallprogram>
+# Copyright (c) 2019-2025 seaks <https://github.com/seaks>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File name: diy-part2.sh
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
@@ -96,7 +96,7 @@ echo "🎉 移植完毕"
 rm -rf ./feeds/packages/net/open-app-filter
 
 # Modify default IP
-sed -i 's/192.168.1.1/10.10.0.253/g' package/base-files/files/bin/config_generate
+sed -i 's/192.168.1.1/192.168.101.1/g' package/base-files/files/bin/config_generate
 
 # fixed rust host build download llvm in ci error
 # sed -i 's/--set=llvm\.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' package/custom_overrides/rust/Makefile
