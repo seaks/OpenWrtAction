@@ -5,7 +5,7 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File: wsl2op.sh
 # Description: WSL automatically compiles Openwrt script code
 
@@ -69,7 +69,7 @@ timer=15
 # 编译环境默认值，1为WSL2，2为非WSL2的Linux环境。不要修改这里
 sysenv=2
 # OpenWrtAction Git URL
-owaUrl=https://github.com/smallprogram/OpenWrtAction.git
+owaUrl=https://github.com/seaks/OpenWrtAction.git
 owa_branch=main
 # 是否首次编译 0否，1是
 is_first_compile=0
