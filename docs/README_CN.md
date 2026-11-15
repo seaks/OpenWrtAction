@@ -17,65 +17,6 @@
 
 </div>
 
----
-[![中文文档](https://img.shields.io/badge/语言-简体中文-blue?style=for-the-badge)](README_CN.md)  [![English Docs](https://img.shields.io/badge/Language-English-green?style=for-the-badge)](README.md)
-  <!-- [![SNAPSHOT](https://img.shields.io/badge/Openwrt_Immortalwrt-Snapshot_release_link-green?style=for-the-badge)](https://github.com/seaks/OpenWrtAction/releases) -->
-
----
-
-## 💻 代码源
-<!-- <div align="center">
-
-[![](https://img.shields.io/badge/source-immortalwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/source-lean-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/coolsnowwolf/lede) [![](https://img.shields.io/badge/source-openwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/openwrt/openwrt)
-
-</div> -->
-
-[![](https://img.shields.io/badge/source-openwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/openwrt/openwrt) 
-![](https://img.shields.io/badge/⭐⭐⭐⭐⭐-强烈推荐-brightgreen?style=flat-square)
- ```
-
-  _______                     ________        __
- |       |.-----.-----.-----.|  |  |  |.----.|  |_
- |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
- |_______||   __|_____|__|__||________||__|  |____|
-          |__| W I R E L E S S   F R E E D O M
- -------------------------------------------------------------------------
- OpenWrt SNAPSHOT, https://github.com/openwrt/openwrt
- -------------------------------------------------------------------------
-
-```
-
-[![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) 
-![](https://img.shields.io/badge/⭐⭐⭐⭐-一般推荐-brightgreen?style=flat-square)
-```
-.___                               __         .__
-|   | _____   _____   ____________/  |______  |  |
-|   |/     \ /     \ /  _ \_  __ \   __\__  \ |  |
-|   |  Y Y  \  Y Y  (  <_> )  | \/|  |  / __ \|  |__
-|___|__|_|  /__|_|  /\____/|__|   |__| (____  /____/
-          \/      \/  BE FREE AND UNAFRAID  \/
- -------------------------------------------------------------------------
- ImmortalWrt SNAPSHOT, https://github.com/immortalwrt/immortalwrt
- -------------------------------------------------------------------------
-```
-
-[![](https://img.shields.io/badge/source-lean_SNAPSHOT-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/coolsnowwolf/lede)
-![](https://img.shields.io/badge/⭐⭐⭐-推荐-brightgreen?style=flat-square)
-
-```
-     _________
-    /        /\        _    ___ ___  ___
-   /  LE    /  \      | |  | __|   \| __|
-  /    DE  /    \     | |__| _|| |) | _|
- /________/  LE  \    |____|___|___/|___|
- \        \   DE /
-  \    LE  \    /  -------------------------------------------------------
-   \  DE    \  /    OpenWrt SNAPSHOT, https://github.com/coolsnowwolf/lede
-    \________\/    -------------------------------------------------------
-```
-
-
----
 
 ## ⚙️ 工作流
 |ActionStatus|Network Support|Latest Release|Latest Download|
