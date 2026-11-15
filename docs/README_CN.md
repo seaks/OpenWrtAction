@@ -32,36 +32,3 @@
 2. 默认账户:`root`
 3. 默认密码:`无`
 ```
-
-
-## ❤️ 致谢
-  
-
-<p align="center">
-  <a href="https://github.com/l0rdg3x"><img src="https://github.com/l0rdg3x.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/JuliusBairaktaris"><img src="https://github.com/JuliusBairaktaris.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/dibdot"><img src="https://github.com/dibdot.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/981213"><img src="https://github.com/981213.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/adschm"><img src="https://github.com/adschm.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/arinc9"><img src="https://github.com/arinc9.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/blocktrron"><img src="https://github.com/blocktrron.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/GeorgeSapkin"><img src="https://github.com/GeorgeSapkin.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/jmccrohan"><img src="https://github.com/jmccrohan.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/mhei"><img src="https://github.com/mhei.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/1715173329"><img src="https://github.com/1715173329.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/coolsnowwolf"><img src="https://github.com/coolsnowwolf.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/mirko"><img src="https://github.com/mirko.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/graysky2"><img src="https://github.com/graysky2.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/QiuSimons"><img src="https://github.com/QiuSimons.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/Ansuel"><img src="https://github.com/Ansuel.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/nbd168"><img src="https://github.com/nbd168.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/kaloz"><img src="https://github.com/kaloz.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/neheb"><img src="https://github.com/neheb.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-  <a href="https://github.com/Noltari"><img src="https://github.com/Noltari.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
-</p>
-
-
----
-<p align="center">
-    <img src="pic/logo/asus.png" width="90"/> <img src="pic/logo/jdcloud.png" width="90"/> <img src="pic/logo/phicomm.png" width="90"/> <img src="pic/logo/RaspberryPi.png" width="90"/> <img src="pic/logo/rockship.png" width="90"/> <img src="pic/logo/xiaomi.png" width="90"/> <img src="pic/logo/x86.png" width="90"/> <img src="pic/logo/xunlei.png" width="90"/>
-</p >
