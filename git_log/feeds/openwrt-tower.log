@@ -1,9 +1,0 @@
-<details> <summary> <b>openwrt-tower new commit log :rocket: </b> </summary>
-
-#### [:mega: Full Changelog. ](https://github.com/kenzok8/openwrt-tower/compare/d18d4dfd98eda5b4ef3d653f770683d32642a0b9...95ebdea06e1d60b8dc4796648f6cc29408db17b0)  
-:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
-
-SHA|Author|Date|Message
--|-|-|-
-95ebdea|kenzok8|Sun Nov 15 17:20:47 2026 +0800|Keep REALITY support-x25519mlkem768 through conversion
-</details>

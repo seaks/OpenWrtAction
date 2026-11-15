@@ -1,9 +1,9 @@
 <details> <summary> <b>openwrt-passwall new commit log :rocket: </b> </summary>
 
-#### [:mega: Full Changelog. ](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/e399ebbdcde3a44b0234d4a80f3d22aae78a0e6a...f88be2d1bbfaac4cc78c14a3ca0881f66f429124)  
+#### [:mega: Full Changelog. ](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/f88be2d1bbfaac4cc78c14a3ca0881f66f429124...dc199849e608dfca9c07930065f7ca926f083f6d)  
 :heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
 
 SHA|Author|Date|Message
 -|-|-|-
-f88be2d1|A-BO|Sun Nov 15 19:03:33 2026 +0800|luci: improve responsive layouts and node selector theming
+dc199849|A-BO|Sun Nov 15 19:47:45 2026 +0800|luci: show a cross for inactive HTTP ports in SOCKS settings
 </details>
