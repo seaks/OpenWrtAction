@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source_code_platforms=(openwrt immortalwrt lede)
+source_code_platforms=(immortalwrt)
 
 openwrt_value='{
   "REPO_URL": "https://github.com/openwrt/openwrt.git",
