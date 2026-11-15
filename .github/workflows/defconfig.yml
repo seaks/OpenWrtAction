@@ -140,7 +140,7 @@ jobs:
           git add .
 
           if ! git diff --cached --quiet; then
-            git config user.name "smallprogram"
+            git config user.name "seaks"
             git config user.email "lei.seaks@gmail.com.com"
             git commit -m "[CI] Configuration: update code for ${{ matrix.source_code_platform }}"
 
