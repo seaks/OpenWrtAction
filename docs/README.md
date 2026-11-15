@@ -1,7 +1,6 @@
 <div align="center">
 
-![](pic/openwrt-logo.jpg)
-<h1>OpenWrt — Multi-Platform Firmware Cloud Compilation</h1>
+<h1>ImmortalWrt — X86设备固件云编译</h1>
 </div>
 
 
@@ -18,266 +17,25 @@
 
 </div>
 
----
-[![中文文档](https://img.shields.io/badge/语言-简体中文-blue?style=for-the-badge)](README_CN.md)  [![English Docs](https://img.shields.io/badge/Language-English-green?style=for-the-badge)](README.md)   
-<!-- [![SNAPSHOT](https://img.shields.io/badge/Openwrt_Immortalwrt-Snapshot_release_link-green?style=for-the-badge)](https://github.com/0x533512/OpenWrtAction-snapshot/releases) -->
 
----
-
-## 💻 Source Code Platform
-<!-- <div align="center">
-
-[![](https://img.shields.io/badge/source-immortalwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/source-lean-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/coolsnowwolf/lede) [![](https://img.shields.io/badge/source-openwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/openwrt/openwrt)
-
-</div> -->
-
-
-[![](https://img.shields.io/badge/source-openwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/openwrt/openwrt) 
-![](https://img.shields.io/badge/⭐⭐⭐⭐⭐-Highly_Recommended-brightgreen?style=flat-square)
- ```
-
-  _______                     ________        __
- |       |.-----.-----.-----.|  |  |  |.----.|  |_
- |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
- |_______||   __|_____|__|__||________||__|  |____|
-          |__| W I R E L E S S   F R E E D O M
- -------------------------------------------------------------------------
- OpenWrt SNAPSHOT, https://github.com/openwrt/openwrt
- -------------------------------------------------------------------------
-
-```
-
-[![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) 
-![](https://img.shields.io/badge/⭐⭐⭐⭐-Generally_Recommended-brightgreen?style=flat-square)
-```
-.___                               __         .__
-|   | _____   _____   ____________/  |______  |  |
-|   |/     \ /     \ /  _ \_  __ \   __\__  \ |  |
-|   |  Y Y  \  Y Y  (  <_> )  | \/|  |  / __ \|  |__
-|___|__|_|  /__|_|  /\____/|__|   |__| (____  /____/
-          \/      \/  BE FREE AND UNAFRAID  \/
- -------------------------------------------------------------------------
- ImmortalWrt SNAPSHOT, https://github.com/immortalwrt/immortalwrt
- -------------------------------------------------------------------------
-```
-
-[![](https://img.shields.io/badge/source-lean_SNAPSHOT-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/coolsnowwolf/lede)
-![](https://img.shields.io/badge/⭐⭐⭐-Recommended-brightgreen?style=flat-square)
-
-```
-     _________
-    /        /\        _    ___ ___  ___
-   /  LE    /  \      | |  | __|   \| __|
-  /    DE  /    \     | |__| _|| |) | _|
- /________/  LE  \    |____|___|___/|___|
- \        \   DE /
-  \    LE  \    /  -------------------------------------------------------
-   \  DE    \  /    OpenWrt SNAPSHOT, https://github.com/coolsnowwolf/lede
-    \________\/    -------------------------------------------------------
-```
-
-
----
-
-## ⚙️ WorkFlow
+## ⚙️ 工作流
 |ActionStatus|Network Support|Latest Release|Latest Download|
 |-|-|-|-|
 |[![Build_Multi_Platform(V6)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml/badge.svg)](https://github.com/seaks/OpenWrtAction/actions/workflows/Build_Multi_Platform(V6).yml)|![](https://img.shields.io/badge/-IPv4-green) ![](https://img.shields.io/badge/-IPv6-yellowgreen)|![GitHub release (with filter)](https://img.shields.io/github/v/release/seaks/OpenWrtAction)|[![GitHub release (latest by date)](https://img.shields.io/github/downloads/seaks/OpenWrtAction/latest/total?style=flat-square)](https://github.com/seaks/OpenWrtAction/releases/latest)|
 
 
-## 📥 Release Guide
 
-<table>
-  <tr>
-    <td width="75%" valign="top">
-      <p>Each Release contains multiple source platform firmwares. Please select the corresponding firmware download according to your platform.</p>
-      <p>Sometimes a Release may not have the firmware you need, for example, the X86 firmware cannot be found. It may be that the compilation in the Action failed. Please wait patiently for the next compiled and uploaded Release.</p>
-      <p>Each Release contains the package compression package of each platform. The name format is buildinfo_[source platform]_[platform name]. For example, <code>buildinfo_immortalwrt_X86</code>. If you do not want to upgrade the firmware, but only want to upgrade a certain package, you can download the compressed package and select the package to upload to the soft router for installation.</p>
-      <p>For more information, please refer to the instructions in the release</p>
-    </td>
-    <td width="25%" valign="top">
-      <img src="pic/telegram.png" width="100%" alt="Telegram">
-    </td>
-  </tr>
-</table>
+## 📚 相关参数
 
----
-
-## 🌈 Screenshot (selecting the Vantage theme)
-
-<p align="center">
-  <img src="screenshots/dashboard-dark.png" alt="The Vantage dashboard in dark mode: health strip flagging a weak client, network path from gateway to access point, radios and SSIDs with packets moving on its grid, live throughput with download and upload in their own colours, and radio cards" width="100%">
-</p>
-
-<table>
-  <tr>
-    <td width="50%"><img src="screenshots/dashboard-light.png" alt="Dashboard in light mode with every check passing"></td>
-    <td width="50%"><img src="screenshots/client-drawer.png" alt="Client inspector drawer open over the clients table"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Light mode: health checks, network path and live throughput</sub></td>
-    <td align="center"><sub>Client inspector with experience score, signal and link details</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="screenshots/palette.png" alt="Command palette searching pages"></td>
-    <td width="50%"><img src="screenshots/status-overview.png" alt="LuCI Status Overview page restyled by the theme"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub><kbd>Ctrl</kbd>+<kbd>K</kbd> palette: every page, fuzzy matched</sub></td>
-    <td align="center"><sub>Stock Status page under the theme, with a combined memory bar</sub></td>
-  </tr>
-  <tr>
-    <td width="50%" valign="middle"><img src="screenshots/channel-analysis.png" alt="Channel Analysis page showing neighbouring networks"></td>
-    <td width="50%" align="center"><img src="screenshots/mobile.png" alt="Dashboard on a phone-sized screen" width="40%"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Stock Channel Analysis (neighbour networks are generated)</sub></td>
-    <td align="center"><sub>Phone layout with the bottom bar and the Wi-Fi/Wired switch</sub></td>
-  </tr>
-</table>
-
-## 🌟 Featured Plugins
-
-Selected plug-in configuration, covering common functions such as network acceleration, theme beautification, system management, etc.
-
-![](https://img.shields.io/badge/Visual_Studio_Code_SSH-Support-green)
-![](https://img.shields.io/badge/Dropbear_SSH-port2222-green)
-![](https://img.shields.io/badge/OpenSSH-port22-green)
-
-
-
-### 📡 Network and Agent
 ```
-CONFIG_PACKAGE_luci-app-adguardhome=y
-CONFIG_PACKAGE_luci-app-ddns-go=y
-CONFIG_PACKAGE_luci-app-homeproxy=y
-CONFIG_PACKAGE_luci-app-mosdns=y
-CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-passwall2=y
-CONFIG_PACKAGE_luci-app-openclash=y
-CONFIG_PACKAGE_luci-app-openvpn=y
-CONFIG_PACKAGE_luci-app-smartdns=y
-CONFIG_PACKAGE_luci-app-ssr-plus=y
-CONFIG_PACKAGE_luci-app-tailscale-community=y
-CONFIG_PACKAGE_luci-app-upnp=y
-CONFIG_PACKAGE_luci-app-udp2raw=y
-CONFIG_PACKAGE_luci-app-udpxy=y
-CONFIG_PACKAGE_luci-proto-wireguard=y
-CONFIG_PACKAGE_luci-app-cloudflared=y
-CONFIG_PACKAGE_luci-app-zerotier=y
-CONFIG_PACKAGE_nmap-full
-CONFIG_PACKAGE_luci-app-rustdesk-server=y
-```
-### ⚙️ System Management and Tools
-```
-CONFIG_PACKAGE_luci-app-accesspolicycontroller=y
-CONFIG_PACKAGE_luci-app-ghfu=y
-CONFIG_PACKAGE_luci-app-commands=y
-CONFIG_PACKAGE_luci-app-ramfree=y
-CONFIG_PACKAGE_luci-app-hd-idle=y
-CONFIG_PACKAGE_luci-app-diskman=y
-CONFIG_PACKAGE_luci-app-cifs-mount=y
-CONFIG_PACKAGE_luci-app-keepalived=y
-CONFIG_PACKAGE_luci-app-uhttpd=y
-CONFIG_PACKAGE_luci-app-package-manager=y
-CONFIG_PACKAGE_luci-app-ttyd=y
-CONFIG_PACKAGE_luci-app-netspeedtest=y
-CONFIG_PACKAGE_openssh-server=y
-CONFIG_PACKAGE_openssh-sftp-server=y
-CONFIG_PACKAGE_luci-app-vlmcsd=y
-CONFIG_PACKAGE_luci-app-wol=y
-CONFIG_PACKAGE_luci-app-wechatpush=y
+1. 默认地址:`192.168.101.1`
+2. 默认账户:`root`
+3. 默认密码:`无`
 ```
 
-### 📊 Flow control and monitoring
-```
-CONFIG_PACKAGE_luci-app-bandix=y
-CONFIG_PACKAGE_luci-app-bandix-plus=y
-CONFIG_PACKAGE_luci-app-eqos=y
-CONFIG_PACKAGE_luci-app-firewall=y
-CONFIG_PACKAGE_luci-app-statistics=y
-CONFIG_PACKAGE_luci-app-vnstat2=y
-```
-### 🛡️ Security and Authentication
-```
-CONFIG_PACKAGE_luci-app-acme=y
-CONFIG_PACKAGE_luci-app-arpbind=y
-CONFIG_PACKAGE_luci-app-banip=y
-```
-### 🎨 UI Themes and Interfaces
-```
-CONFIG_PACKAGE_luci-theme-7dollar=y
-CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-app-argon-config=y
-CONFIG_PACKAGE_luci-theme-carbon=y
-CONFIG_PACKAGE_luci-theme-kucat=y
-CONFIG_PACKAGE_luci-app-kucat-config=y
-CONFIG_PACKAGE_luci-theme-aurora=y
-CONFIG_PACKAGE_luci-theme-material3=y
-CONFIG_PACKAGE_luci-theme-Arwi=y
-CONFIG_PACKAGE_luci-theme-alpha=y
-CONFIG_PACKAGE_luci-app-alpha-config=y
-CONFIG_PACKAGE_luci-theme-bootstrap=y
-CONFIG_PACKAGE_luci-theme-footstrap=y
-CONFIG_PACKAGE_luci-theme-material=y
-CONFIG_PACKAGE_luci-theme-openwrt=y
-CONFIG_PACKAGE_luci-theme-openwrt-2020=y
-CONFIG_PACKAGE_luci-app-vantage=y
-CONFIG_PACKAGE_luci-theme-vantage=y
-```
 
-### 🚀 luci-app-ghfu
-
-You can directly update to the latest firmware from this repository via LuCI, thereby bypassing the tedious manual update process. For more details, please refer to https://github.com/seaks/openwrt-ghfu.
-
-![alt text](pic/ghfu/en.png)
-
-![alt text](pic/ghfu/en_update.png)
-
-
----
- 
-## 🔗 Quick Jump
-#### [🧭 Latest firmware list, click to get it](https://github.com/seaks/OpenWrtAction/tags)
-#### [🧭 R1 Soft Router Installation ESXi 8.0 Tutorial](R1_ESXI8.md)
----
-## 📚 Related parameters
-```
-1. Default address:`10.10.0.253`
-2. Default account:`root`
-3. Default password:`None`
-```
-
----
-## 🤖 Automation script
-### wsl2op.sh local automatic compilation shell script description
-
-Before running, please make sure that your compilation environment has installed the required compilation environment and use a non-root user to execute.
-
-### Execution compilation method (non-root user)
-
-#### First execution
-```shell
-git clone https://github.com/seaks/OpenWrtAction
-cd OpenWrtAction
-bash wsl2op.sh
-```
-#### Second execution
-```shell
-cd OpenWrtAction
-bash wsl2op.sh
-```
----
-## ❤️ Acknowledgements
-
-Thanks to everyone who used, contributed to, and contributed to this project!
-
-Special thanks to the following projects/communities for providing inspiration and support for this project:
-
-- [openwrt](https://github.com/openwrt/openwrt.git)
-- [immortalwrt](https://github.com/immortalwrt/immortalwrt.git)
-- [lede](https://github.com/coolsnowwolf/lede)
-- And every enthusiastic user in the community ❤️
+## ❤️ 致谢
+  
 
 <p align="center">
   <a href="https://github.com/l0rdg3x"><img src="https://github.com/l0rdg3x.png" width="75" style="border-radius:10%; margin: 5px;" /></a>
