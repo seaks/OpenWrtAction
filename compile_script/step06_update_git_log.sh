@@ -25,11 +25,11 @@ echo "## Build Information">> release.txt
 
 echo "<table>">>release.txt
 echo "  <tr>">>release.txt
-echo "    <th>platform</th>">>release.txt
-echo "    <th>source platform</th>">>release.txt
-echo "    <th>kernel</th>">>release.txt
-echo "    <th>target</th>">>release.txt
-echo "    <th>compile status</th>">>release.txt
+echo "    <th>平台</th>">>release.txt
+echo "    <th>源码平台</th>">>release.txt
+echo "    <th>内核</th>">>release.txt
+echo "    <th>目标</th>">>release.txt
+echo "    <th>编译状态</th>">>release.txt
 echo "  </tr>">>release.txt
 
 for git_folder in "${git_folders[@]}"; do
@@ -43,8 +43,8 @@ for git_folder in "${git_folders[@]}"; do
 done
 echo "</table>">>release.txt
 echo "">>release.txt
-echo "## What's Changed" >>release.txt
-echo "">>release.txt
+echo "## 源码信息" >>release.txt
+echo "## 构建信息">>release.txt
 
 # 清理 git_log 目录中的非 log 文件
 find git_log -type f ! -name 'log' -exec rm {} +
@@ -55,13 +55,13 @@ for git_folder in "${git_folders[@]}"; do
     declare -n repo_urls="${git_folder}_REPO_URLS"
 
     if [[ "$git_folder" == "feeds" ]]; then
-        echo "">>release.txt
+        echo "## 更新内容">>release.txt
         echo "### common $git_folder" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "custompackages" ]]; then
         echo "">>release.txt
-        echo "### custom packages" >>release.txt
+        echo "### 自定义软件包" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "openwrt" || "$git_folder" == "immortalwrt" || "$git_folder" == "lede" ]]; then
@@ -131,7 +131,7 @@ for git_folder in "${git_folders[@]}"; do
         if ! git -C "git_repositories/$git_folder/$OUTPUT_FILE" cat-file -t "$SHA_Begin" >/dev/null 2>&1 && [ -n "$SHA_Begin" ]; then
             echo "     :x: Invalid SHA detected (Begin: $SHA_Begin, End: $SHA_End) for $OUTPUT_FILE"
             echo "<details> <summary> <b>$TITLE_MESSAGE :x: </b> </summary>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
+            echo "提交|作者|日期|说明" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "<b> It is detected that $OUTPUT_FILE has an illegal SHA value. It is possible that $OUTPUT_FILE has git rebase behavior. The relevant git update log cannot be counted. Please wait for the next compilation time.</b>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "</details>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
@@ -183,7 +183,7 @@ for git_folder in "${git_folders[@]}"; do
         echo ""
     done
     if [ "$UPDATE_COUNT" -eq 0 ]; then
-        echo "No source code updates...... :zzz:">>release.txt
+        echo "本次无源码更新...... :zzz:">>release.txt
     fi
 done
 
