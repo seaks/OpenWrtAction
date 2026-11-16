@@ -4,7 +4,7 @@
 source $GITHUB_WORKSPACE/compile_script/platforms.sh
 
 # 声明全局数组
-declare -a openwrt_REPO_URLS=() 
+declare -a immortalwrt-master_REPO_URLS=() 
 declare -a immortalwrt_REPO_URLS=()
 declare -a lede_REPO_URLS=() 
 declare -a all_REPO_URLS=()
