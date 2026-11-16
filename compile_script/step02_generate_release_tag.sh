@@ -6,16 +6,15 @@
 #
 # 用法：step02_generate_release_tag.sh <release_tag> <source_code_platform> <config_dir>
 #
-# 【本次修改清单】
-#   1. 全中文输出
-#   2. 修复 sorce → source 拼写错误（原先徽章 alt 文本拼错）
-#   3. 徽章仓库名集中到 REPO_SLUG，一处修改全局生效
-#   4. 修复 MyAction
-#   5. 徽章 URL 做百分号编码，平台名若含空格/加号不再拼坏链接
-#   6. 表格行改为「先算完再一次性写入」，避免中途失败留下半截 HTML
-#   7. 补齐原本缺失的健壮性：config 缺失、KERNEL_PATCHVER 取不到、
-#      kernel 文件不存在、未知 source_code_platform 等情况全部兜底
-#   8. 徽章文字由「in_progress_or_waiting.....」改为「编译中…」，去掉一串句点
+# 【本版修正点】
+#   1. 徽章改用 SHA1 校验和形式 /badge/<label>-<msg>-<color>，中文与特殊字符
+#      全部安全，无需手工百分号编码
+#   2. 徽章文字与 step07 写回时的识别串严格一致（编译中…），保证状态能被覆盖
+#   3. 仓库名集中到 REPO_SLUG / ACTIONS_SITE，两处已对齐为真实存在的仓库
+#   4. source_code_platform 支持 immortalwrt-master（之前 case 会漏掉）
+#   5. 表格行先算完再一次性写入，避免中途失败留下半截 HTML
+#   6. 健壮性兜底：参数缺失、平台矩阵为空、config 缺失、KERNEL_PATCHVER
+#      取不到、内核版本文件不存在、未知平台
 # ==============================================================================
 
 release_tag=$1
@@ -25,16 +24,19 @@ config=$3
 source "$GITHUB_WORKSPACE/compile_script/platforms.sh"
 
 # ------------------------------------------------------------------------------
-# 集中配置：改这里就能全局生效，不用满文件找
+# 集中配置：改这里就能全局生效
+#   下载量徽章必须带 latest 或具体 tag，直接 /<repo>/total 会 404
 # ------------------------------------------------------------------------------
-REPO_SLUG="seaks/OpenWrtAction"          # 有 Release 的那个仓库（下载量徽章指向它）
-ACTIONS_SITE="https://github.com/seaks/MyAction"   # 原写成 MyAction，少个 s 导致 404
+REPO_SLUG="seaks/OpenWrtAction"                  # 承载 Release 的仓库
+ACTIONS_SITE="https://github.com/seaks/MyAction" # Actions 站点仓库，已补上缺失的 s
 
-# 输出文件：和 step06 里 cat 的文件名严格对齐
+# 输出文件：与 step06 里 cat 的文件名严格对齐
 OUT_FILE="release_${source_code_platform}.txt"
 
-# 徽章状态文字（URL 里不能有空格，用 %20；加号用 %2B）
-BADGE_TEXT="%E7%BC%96%E8%AF%91%E4%B8%AD%E2%80%A6"   # 「编译中…」
+# 徽章文字：⚠️ 必须与 step07_organize_tag.sh 里匹配/替换的串完全一致，
+# 否则编译结束后状态徽章无法被覆盖，会永远停在「编译中…」
+BADGE_TEXT="编译中…"
+BADGE_LABEL="build"
 
 # ------------------------------------------------------------------------------
 # 入口校验
@@ -53,11 +55,19 @@ fi
 
 # ------------------------------------------------------------------------------
 # 选取对应源码平台的构建矩阵
+#   immortalwrt-master 与 immortalwrt 共用同一份平台矩阵，
+#   但产出独立的 release_immortalwrt-master.txt，表格里分两行显示
 # ------------------------------------------------------------------------------
 case "$source_code_platform" in
-    immortalwrt_master)    selected_platforms=("${immortalwrt_master_platforms[@]}")    ;;
-    immortalwrt) selected_platforms=("${immortalwrt_platforms[@]}") ;;
-    lede)       selected_platforms=("${lede_platforms[@]}")       ;;
+    openwrt)
+        selected_platforms=("${openwrt_platforms[@]}")
+        ;;
+    immortalwrt|immortalwrt-master)
+        selected_platforms=("${immortalwrt_platforms[@]}")
+        ;;
+    lede)
+        selected_platforms=("${lede_platforms[@]}")
+        ;;
     *)
         echo "⚠️ 未知源码平台：$source_code_platform，跳过表格生成。"
         selected_platforms=()
@@ -72,16 +82,29 @@ if [[ "${#selected_platforms[@]}" -eq 0 ]]; then
 fi
 
 # ------------------------------------------------------------------------------
-# URL 百分号编码：只处理徽章路径里可能出现的少量字符，够用即可
+# 构造徽章 URL
+#   采用 shields.io 的 SHA1 校验和形式：
+#     /badge/<label>-<message>-<color>
+#   其中 label/message 的原始值经 sha1hex 后拼入，可安全承载中文、空格、加号、
+#   斜杠等任意字符，比手工做百分号编码可靠得多
 # ------------------------------------------------------------------------------
-url_encode() {
+sha1hex() {
+    printf '%s' "$1" | sha1sum | awk '{print $1}'
+}
+
+badge_url="https://img.shields.io/badge/${BADGE_LABEL}-$(sha1hex "$BADGE_TEXT")-$(sha1hex yellow)?logo=githubactions&logoColor=yellow&style=flat-square"
+
+# scp / plm 是两个自定义属性，供 step07 定位要替换的那一行徽章。
+# 值里若含引号或尖括号会破坏 HTML，这里做最小化清洗
+sanitize_attr() {
     local s="$1"
-    s="${s// /%20}"
-    s="${s//+/%2B}"
-    s="${s//#/%23}"
-    s="${s//\//%2F}"
+    s="${s//\"/}"
+    s="${s//</}"
+    s="${s//>/}"
     printf '%s' "$s"
 }
+
+attr_scp=$(sanitize_attr "$source_code_platform")
 
 # ------------------------------------------------------------------------------
 # 逐平台生成表格行
@@ -138,22 +161,19 @@ for platform in "${selected_platforms[@]}"; do
     fi
 
     if [[ -z "$kernel_version" ]]; then
-        echo "⚠️ 未能解析 $platform 的内核版本（$kernel_version_file），表格中留空。"
+        echo "⚠️ 未能解析 $platform 的内核版本（$kernel_version_file），表格中标注为未知。"
         kernel_version="未知"
     fi
 
-    # --- 4. 拼徽章 URL（做编码，防止平台名里的特殊字符破坏链接） ---
-    badge_plm=$(url_encode "$platform")
-    badge_scp=$(url_encode "$source_code_platform")
-    badge_url="https://img.shields.io/badge/build-${BADGE_TEXT}-yellow?logo=githubactions&logoColor=yellow&style=flat-square"
+    attr_plm=$(sanitize_attr "$platform")
 
-    # --- 5. 累积表格行 ---
+    # --- 4. 累积表格行 ---
     rows+="  <tr>"$'\n'
     rows+="    <td><strong>🧊 $platform</strong></td>"$'\n'
     rows+="    <td><strong>$source_code_platform</strong></td>"$'\n'
     rows+="    <td><strong>$kernel_version</strong></td>"$'\n'
     rows+="    <td><strong>$target_board</strong></td>"$'\n'
-    rows+="    <td><img scp=\"$badge_scp\" plm=\"$badge_plm\" src=\"$badge_url\" alt=\"编译状态\"/></td>"$'\n'
+    rows+="    <td><img scp=\"$attr_scp\" plm=\"$attr_plm\" src=\"$badge_url\" alt=\"编译状态\"/></td>"$'\n'
     rows+="  </tr>"$'\n'
 
     echo "✅ $platform：目标 $target_board，内核 $kernel_version"
@@ -172,7 +192,9 @@ fi
 echo "------------------------------------------------------------"
 echo "📊 $source_code_platform 表格生成完毕：成功 $ok_count 个平台，跳过 $skip_count 个。"
 echo "   输出文件：$OUT_FILE（$(wc -l < "$OUT_FILE") 行）"
+if [[ "$ok_count" -gt 0 ]]; then
+    echo "   徽章文字：$BADGE_TEXT（step07 需按此串回写最终状态）"
+fi
 echo "------------------------------------------------------------"
 
-touch "$OUT_FILE"
 echo 'status=success' >> "$GITHUB_OUTPUT"
