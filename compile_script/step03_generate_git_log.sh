@@ -33,7 +33,7 @@ log_file="git_log_${source_code_platform}.txt"
 echo "==== 🔍 开始收集源码 SHA 指纹（$source_code_platform）===="
 
 # ------------------------------------------------------------
-# 1. 主源码仓库（immortalwrt-master / immortalwrt / lede 共用同一个目录名 openwrt）
+# 1. 主源码仓库（immortalwrt_master / immortalwrt / lede 共用同一个目录名 openwrt）
 # ------------------------------------------------------------
 main_sha=$(git -C openwrt log -n 1 --format="%H" 2>/dev/null)
 
