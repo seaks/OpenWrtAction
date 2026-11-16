@@ -1,0 +1,11 @@
+<details> <summary> <b>openwrt-ghfu new commit log :rocket: </b> </summary>
+
+#### [:mega: Full Changelog. ](https://github.com/smallprogram/openwrt-ghfu/compare/1f06bd2ffc6f897a71d96543faa99767833be5f1...304b561b101557c374aa3d752632720e3ef7af94)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+304b561|seaks|Mon Nov 16 08:57:16 2026 +0800|Update README.md
+02b2caa|seaks|Mon Nov 16 08:55:02 2026 +0800|Update ghfu.po
+b7641ec|seaks|Mon Nov 16 08:54:24 2026 +0800|Update GitHub repository in defaults script
+</details>
