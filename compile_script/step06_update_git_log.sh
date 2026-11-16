@@ -1,256 +1,202 @@
 #!/bin/bash
-source $GITHUB_WORKSPACE/compile_script/main_and_feeds_url.sh
+source "$GITHUB_WORKSPACE/compile_script/main_and_feeds_url.sh"
 
 release_tag=$1
-git_folders=(immortalwrt immortalwrt_master feeds custompackages)   
-cd $GITHUB_WORKSPACE
+git_folders=(immortalwrt immortalwrt_master feeds custompackages)
+
+cd "$GITHUB_WORKSPACE" || exit 1
 
 # ------------------------------------------------------------
-# 工具函数：确保日志文件末尾有换行，避免两个仓库的记录粘成一行
+# 分类元数据： 显示名 | artifact 文件名 | 主仓库分类(需要构建表格)
+# 说明：bash 变量名不能含横杠，故内部一律用下划线；显示名在这里还原成横杠
 # ------------------------------------------------------------
+declare -A FOLDER_TITLE=(
+    [immortalwrt]="immortalwrt Release"
+    [immortalwrt_master]="immortalwrt master"
+    [feeds]="Feeds 更新内容"
+    [custompackages]="软件包更新内容"
+)
+declare -A FOLDER_ARTIFACT=(
+    [immortalwrt]="immortalwrt"
+    [immortalwrt_master]="immortalwrt-master"
+    [feeds]="feeds"
+    [custompackages]="custompackages"
+)
+
+# ⚠️ 请核对：以下两个名字我无法替你确认，必须你自己看一眼
+REPO_SLUG="seaks/OpenWrtAction"        # 有 Release 的那个仓库
+ACTIONS_SITE="https://github.com/seaks" # MyAction 实测 404，先指向账号页
+
 ensure_log_trailing_newline() {
-    local log_file="$1"
-    if [ -f "$log_file" ] && [ -s "$log_file" ] && [ -n "$(tail -c 1 "$log_file" 2>/dev/null)" ]; then
-        echo >> "$log_file"
-    fi
+    local f="$1"
+    [ -f "$f" ] && [ -s "$f" ] && [ -n "$(tail -c 1 "$f" 2>/dev/null)" ] && echo >> "$f"
+    return 0
 }
 
-# [改动] 下载量徽章：原版仓库路径缺少 Release 时会 404，这里保留结构但修正跳转链接
-#        注意：若你的仓库名不是 OpenWrtAction，请同步修改下面两处仓库名
-REPO_SLUG="seaks/OpenWrtAction"          # [改动] 集中定义，避免多处写错
-ACTIONS_SITE="https://github.com/seaks/MyAction"   # [改动] 原为 MyAction（少个 s），已修正
+# ============================================================
+# 一、Release 头部：徽章 + 构建信息表格
+# ============================================================
+{
+    echo "[![](https://img.shields.io/github/downloads/${REPO_SLUG}/latest/total?style=flat-square)](${ACTIONS_SITE})"
+    echo ""
+    echo "## 源码信息"
+    echo "[![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)"
+    echo "[![](https://img.shields.io/badge/source-immortalwrt_master-orange?logo=openwrt&logoColor=orange&style=flat-square)](https://github.com/immortalwrt/immortalwrt/tree/master)"
+    echo ""
+    echo "## 构建信息"
+    echo "<table>"
+    echo "  <tr><th>平台</th><th>源码平台</th><th>内核</th><th>目标</th><th>编译状态</th></tr>"
+} > release.txt
 
-echo "[![](https://img.shields.io/github/downloads/${REPO_SLUG}/${release_tag}/total?style=flat-square)](${ACTIONS_SITE})" > release.txt
-
-echo "" >> release.txt
-echo "## 源码信息" >> release.txt                                    # [改动] Source Code Information
-echo "[![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)" >> release.txt   # [改动] 去掉 openwrt 25.12 与 lean SNAPSHOT 徽章
-echo "" >> release.txt
-
-echo "## 构建信息" >> release.txt                                    # [改动] Build Information
-echo "<table>" >> release.txt
-echo "  <tr>" >> release.txt
-echo "    <th>平台</th>" >> release.txt                              # [改动] platform
-echo "    <th>源码平台</th>" >> release.txt                          # [改动] source platform
-echo "    <th>内核</th>" >> release.txt                              # [改动] kernel
-echo "    <th>目标</th>" >> release.txt                              # [改动] target
-echo "    <th>编译状态</th>" >> release.txt                          # [改动] compile status
-echo "  </tr>" >> release.txt
-
-# 拼接各源码平台生成的表格行
-for git_folder in "${git_folders[@]}"; do
-    if [[ "$git_folder" == "feeds" ]]; then
-        echo "跳过 feeds（feeds 无独立构建表格）"
-    else
-        if [ -f "release_$git_folder.txt" ]; then
-            cat "release_$git_folder.txt" >> "release.txt"
-        fi
-    fi
+for folder in "${git_folders[@]}"; do
+    case "$folder" in
+        immortalwrt|immortalwrt_master)
+            if [ -f "release_${folder}.txt" ]; then
+                cat "release_${folder}.txt" >> release.txt
+            else
+                echo "  <tr><td colspan=\"5\">⚠️ ${folder} 未生成构建信息（检查 step02 日志）</td></tr>" >> release.txt
+            fi
+            ;;
+    esac
 done
 
-echo "</table>" >> release.txt
-echo "" >> release.txt
-echo "## 更新内容" >> release.txt                                     # [改动] What's Changed
-echo "" >> release.txt
+{
+    echo "</table>"
+    echo ""
+    echo "## 更新内容"
+    echo ""
+} >> release.txt
 
-# 清理 git_log 目录中的非 log 文件（只保留名为 log 的 SHA 记录文件）
-find git_log -type f ! -name 'log' -exec rm {} +
+# ============================================================
+# 二、逐分类比对提交
+# ============================================================
+find git_log -type f ! -name 'log' -delete 2>/dev/null
 mkdir -p git_repositories
 
-# ------------------------------------------------------------
-# 主循环：逐个源码分类处理
-# ------------------------------------------------------------
-for git_folder in "${git_folders[@]}"; do
-    echo ">>> 处理分类: $git_folder"
-    declare -n repo_urls="${git_folder}_REPO_URLS"
+for folder in "${git_folders[@]}"; do
+    title="${FOLDER_TITLE[$folder]:-$folder}"
+    hint="${FOLDER_ARTIFACT[$folder]:-$folder}"
+    echo ">>> 处理分类: $folder （标题「$title」，artifact 名 $hint）"
 
-    # 分区标题（中文）
-    case "$git_folder" in
-        feeds)          echo "" >> release.txt; echo "### 通用 Feeds" >> release.txt;   echo "" >> release.txt ;;   # [改动]
-        custompackages) echo "" >> release.txt; echo "### 自定义软件包" >> release.txt; echo "" >> release.txt ;;   # [改动]
-        openwrt|immortalwrt|lede)
-                        echo "" >> release.txt; echo "### $git_folder" >> release.txt;  echo "" >> release.txt ;;
-    esac
+    declare -n repo_urls="${folder}_REPO_URLS" 2>/dev/null
+    if [ $? -ne 0 ] || [ -z "${repo_urls+x}" ]; then
+        echo "   ⚠️ 未定义数组 ${folder}_REPO_URLS，请在 main_and_feeds_url.sh 中补上"
+        printf "\n### %s\n\n⚠️ 未配置 <code>%s_REPO_URLS</code>，请检查 main_and_feeds_url.sh。\n\n" "$title" "$folder" >> release.txt
+        continue
+    fi
+
+    mkdir -p "git_log/$folder"
+    printf "\n### %s\n\n" "$title" >> release.txt
 
     UPDATE_COUNT=0
+    seen_list=$(mktemp)
 
     for url in "${repo_urls[@]}"; do
-        # ---------- [改动] 跳过空行与重复项 ----------
         [ -z "$url" ] && continue
-        REPO_URL=$(echo "$url" | awk '{print $1}')
-        BRANCH=$(echo "$url"  | awk '{print $2}')
+        REPO_URL=$(printf '%s' "$url" | awk '{print $1}')
+        BRANCH=$(printf '%s'  "$url" | awk '{print $2}')
+        [ -z "$REPO_URL" ] && continue
 
-        OUTPUT_FILE="${REPO_URL##*/}"
-        OUTPUT_FILE="${OUTPUT_FILE%.git}"          # 去掉 .git 后缀
-        TITLE_MESSAGE="${OUTPUT_FILE} 新提交记录"    # [改动] new commit log → 新提交记录
+        NAME="${REPO_URL##*/}"; NAME="${NAME%.git}"
+        [ -z "$NAME" ] || [ "$NAME" = "$REPO_URL" ] && continue
 
-        # ---------- [改动] 同一分类内去重，避免 openwrt-ghfu 打印两次 ----------
-        if [ -d "git_repositories/$git_folder/$OUTPUT_FILE" ]; then
-            echo "   ↷ 跳过重复源: $OUTPUT_FILE"
-            continue
+        if grep -qx "$NAME" "$seen_list"; then
+            echo "   ↷ 跳过重复源: $NAME"; continue
         fi
+        printf '%s\n' "$NAME" >> "$seen_list"
 
-        # ---------- 克隆仓库（[改动] 加 --no-checkout --depth 提速）----------
+        DEST="git_repositories/$folder/$NAME"
         if [ -n "$BRANCH" ]; then
-            git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 --branch "$BRANCH" \
-                "git_repositories/$git_folder/$OUTPUT_FILE" 2>/dev/null \
-            || git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 \
-                "git_repositories/$git_folder/$OUTPUT_FILE" 2>/dev/null
+            git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 --branch "$BRANCH" "$DEST" 2>/dev/null \
+             || git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 "$DEST" 2>/dev/null
         else
-            git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 \
-                "git_repositories/$git_folder/$OUTPUT_FILE" 2>/dev/null
+            git clone "$REPO_URL" --filter=blob:none --no-checkout --depth 300 "$DEST" 2>/dev/null
         fi
 
-        if [ ! -d "git_repositories/$git_folder/$OUTPUT_FILE" ]; then
-            echo "   ✗ 克隆失败，跳过: $REPO_URL"
-            echo "<b>⚠️ 仓库 <code>${OUTPUT_FILE}</code> 克隆失败，本次跳过。</b>" >> release.txt
-            echo "" >> release.txt
+        if [ ! -d "$DEST" ]; then
+            echo "   ✗ 克隆失败: $REPO_URL"
+            printf '<b>⚠️ 仓库 <code>%s</code> 克隆失败，本次跳过。</b>\n\n' "$NAME" >> release.txt
             continue
         fi
 
-        # ========================================================
-        #  获取真理 SHA（SSoT）：优先用 Artifact 里记录的历史值
-        # ========================================================
-        SHA_End=""
-
-        # 1) 优先从本分类的 artifact 日志取
-        if [ -f "git_log_${git_folder}.txt" ]; then
-            SHA_End=$(grep "^${OUTPUT_FILE}:" "git_log_${git_folder}.txt" 2>/dev/null | cut -d: -f2)
+        # ---- 取真理 SHA ----
+        SHA_END=""
+        if [ -f "git_log_${hint}.txt" ]; then
+            SHA_END=$(grep "^${NAME}:" "git_log_${hint}.txt" 2>/dev/null | tail -n 1 | cut -d: -f2-)
         fi
-
-        # 2) 退而求其次，扫描全部 artifact 日志
-        if [ -z "$SHA_End" ]; then
-            SHA_End=$(grep -h "^${OUTPUT_FILE}:" git_log_*.txt 2>/dev/null | head -n 1 | cut -d: -f2)
+        if [ -z "$SHA_END" ]; then
+            SHA_END=$(grep -h "^${NAME}:" git_log_*.txt 2>/dev/null | tail -n 1 | cut -d: -f2-)
         fi
-
-        # 3) 兜底：用当前 HEAD（step03 漏记时的安全降级）
-        if [ -z "$SHA_End" ]; then
-            SHA_End=$(git -C "git_repositories/$git_folder/$OUTPUT_FILE" rev-parse HEAD)
-            echo "   ⚠️ [降级] Artifact 中未找到 $OUTPUT_FILE 记录，使用最新 HEAD: $SHA_End"
+        if [ -z "$SHA_END" ]; then
+            SHA_END=$(git -C "$DEST" rev-parse HEAD 2>/dev/null)
+            echo "   ⚠️ [降级] artifact 无记录，使用 HEAD: $SHA_END"
         else
-            echo "   ✅ [SSoT 命中] $OUTPUT_FILE → $SHA_End"
+            echo "   ✅ [SSoT] $NAME → $SHA_END"
+        fi
+        if [ -z "$SHA_END" ]; then
+            echo "   ✗ 取不到 SHA，跳过 $NAME"; continue
         fi
 
-        echo "$git_folder/$OUTPUT_FILE 开始比对 -------------------------------------"
-        echo "   SHA_End : $SHA_End"
-
-        LOG_FILE="git_log/$git_folder/log"
+        LOG_FILE="git_log/$folder/log"
         ensure_log_trailing_newline "$LOG_FILE"
+        SHA_BEGIN=$(grep "^${NAME}:" "$LOG_FILE" 2>/dev/null | tail -n 1 | cut -d: -f2-)
+        BLOCK="git_log/$folder/$NAME.log"
+        : > "$BLOCK"
 
-        SHA_Begin=$(grep "^${OUTPUT_FILE}:" "$LOG_FILE" 2>/dev/null | cut -d: -f2)
-        echo "   SHA_Begin: ${SHA_Begin:-（无历史记录）}"
-
-        # ---------- 首次：log 文件里没有该仓库条目 → 建立基线 ----------
-        if [ ! -f "$LOG_FILE" ] || ! grep -q "^${OUTPUT_FILE}:" "$LOG_FILE" 2>/dev/null; then
-            echo "${OUTPUT_FILE}:${SHA_End}" >> "$LOG_FILE"
-
-            # [改动] 首次不再静默，输出一条基线提示，避免满屏“无更新”
-            echo "<details> <summary> <b>${OUTPUT_FILE} 首次记录基线 :seedling: </b> </summary>" \
-                >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "<b>已记录当前提交 <code>${SHA_End:0:7}</code>，自下次编译起将展示变更明细。</b>" \
-                >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "</details>" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-
+        if ! grep -q "^${NAME}:" "$LOG_FILE" 2>/dev/null; then
+            printf '%s:%s\n' "$NAME" "$SHA_END" >> "$LOG_FILE"
+            printf '<details> <summary> <b>%s 首次记录基线 :seedling: </b> </summary>\n\n<b>已记录当前提交 <code>%s</code>，自下次编译起展示变更明细。</b>\n\n</details>\n' \
+                "$NAME" "${SHA_END:0:7}" >> "$BLOCK"
             UPDATE_COUNT=$((UPDATE_COUNT + 1))
             echo "   → 首次建立基线"
-        fi
 
-        # ---------- SHA 非法（可能被 rebase / force push）----------
-        if [ -n "$SHA_Begin" ] \
-           && ! git -C "git_repositories/$git_folder/$OUTPUT_FILE" cat-file -e "${SHA_Begin}^{commit}" 2>/dev/null; then
-
-            echo "   ✗ SHA 非法（Begin: $SHA_Begin, End: $SHA_End）"
-
-            echo "<details> <summary> <b>$TITLE_MESSAGE :warning: </b> </summary>" \
-                >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "<b>检测到 <code>${OUTPUT_FILE}</code> 的历史提交 <code>${SHA_Begin:0:7}</code> 已不存在，" \
-                 "该仓库可能发生过 rebase 或强制推送，本次无法统计变更，基线已重置。</b>" \
-                >> "git_log/$git_folder/$OUTPUT_FILE.log"                                    # [改动] 中文说明
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "</details>" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-
-            sed -i "s/^${OUTPUT_FILE}:.*/${OUTPUT_FILE}:${SHA_End}/" "$LOG_FILE"
+        elif ! git -C "$DEST" cat-file -e "${SHA_BEGIN}^{commit}" 2>/dev/null; then
+            printf '<details> <summary> <b>%s 新提交记录 :warning: </b> </summary>\n\n<b>历史提交 <code>%s</code> 已不存在，该仓库可能 rebase 或强制推送，本次无法统计，基线已重置。</b>\n\n</details>\n' \
+                "$NAME" "${SHA_BEGIN:0:7}" >> "$BLOCK"
+            sed -i "s|^${NAME}:.*|${NAME}:${SHA_END}|" "$LOG_FILE"
             UPDATE_COUNT=$((UPDATE_COUNT + 1))
+            echo "   ✗ SHA 非法，基线已重置"
 
-        # ---------- 有变更 ----------
-        elif [ -z "$SHA_Begin" ] || [ "$SHA_Begin" != "$SHA_End" ]; then
+        elif [ "$SHA_BEGIN" != "$SHA_END" ]; then
+            printf '<details> <summary> <b>%s 新提交记录 :rocket: </b> </summary>\n\n' "$NAME" >> "$BLOCK"
+            printf '#### [:mega: 查看完整变更记录](%s/compare/%s...%s)  \n' "${REPO_URL%.git}" "$SHA_BEGIN" "$SHA_END" >> "$BLOCK"
+            echo ':heavy_exclamation_mark: 列表仅展示最近 15 条提交。  ' >> "$BLOCK"
+            echo "" >> "$BLOCK"
+            echo "提交|作者|日期|说明" >> "$BLOCK"
+            echo "-|-|-|-" >> "$BLOCK"
 
-            echo "<details> <summary> <b>$TITLE_MESSAGE :rocket: </b> </summary>" \
-                >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
+            git -C "$DEST" log --pretty=format:'%h|%an|%ad|%s' --date=short "${SHA_BEGIN}...${SHA_END}" 2>/dev/null \
+                | head -n 15 >> "$BLOCK"
 
-            if [ -z "$SHA_Begin" ]; then
-                echo "<b>该仓库尚无历史基线，本次仅记录当前提交。</b>" \
-                    >> "git_log/$git_folder/$OUTPUT_FILE.log"                              # [改动]
-            else
-                CLEAN_REPO_URL="${REPO_URL%.git}"
-                COMPARE_URL="${CLEAN_REPO_URL}/compare/${SHA_Begin}...${SHA_End}"
-
-                echo "#### [:mega: 查看完整变更记录](${COMPARE_URL})  " \
-                    >> "git_log/$git_folder/$OUTPUT_FILE.log"                               # [改动]
-                echo ":heavy_exclamation_mark: 列表仅展示最近 15 条提交。  " \
-                    >> "git_log/$git_folder/$OUTPUT_FILE.log"                               # [改动]
-                echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-                echo "提交|作者|日期|说明" >> "git_log/$git_folder/$OUTPUT_FILE.log"          # [改动]
-                echo "-|-|-|-" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-
-                git -C "git_repositories/$git_folder/$OUTPUT_FILE" \
-                    log --pretty=format:"%h|%an|%ad|%s" --date=short \
-                    "${SHA_Begin}...${SHA_End}" 2>/dev/null | head -n 15 \
-                    >> "git_log/$git_folder/$OUTPUT_FILE.log"
-
-                TOTAL_COMMITS=$(git -C "git_repositories/$git_folder/$OUTPUT_FILE" \
-                    log --pretty=format:"%h" "${SHA_Begin}...${SHA_End}" 2>/dev/null | wc -l)
-                if [ "$TOTAL_COMMITS" -gt 15 ]; then
-                    echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-                    echo "> 共 ${TOTAL_COMMITS} 条提交，此处仅列出前 15 条。" \
-                        >> "git_log/$git_folder/$OUTPUT_FILE.log"                            # [改动]
-                fi
+            TOTAL=$(git -C "$DEST" log --pretty=format:'%h' "${SHA_BEGIN}...${SHA_END}" 2>/dev/null | wc -l)
+            if [ "${TOTAL:-0}" -gt 15 ]; then
+                printf '\n> 共 %s 条提交，此处仅列出前 15 条。\n' "$TOTAL" >> "$BLOCK"
             fi
+            printf '\n</details>\n' >> "$BLOCK"
 
-            echo "" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "</details>" >> "git_log/$git_folder/$OUTPUT_FILE.log"
-
-            echo "     |-----------------------------------|"
-            echo "     $OUTPUT_FILE 有更新"
-            echo "     |-----------------------------------|"
-
-            sed -i "s/^${OUTPUT_FILE}:.*/${OUTPUT_FILE}:${SHA_End}/" "$LOG_FILE"
+            sed -i "s|^${NAME}:.*|${NAME}:${SHA_END}|" "$LOG_FILE"
             UPDATE_COUNT=$((UPDATE_COUNT + 1))
-
-        # ---------- 无变更 ----------
+            echo "     ── $NAME 有更新（$TOTAL 条）"
         else
-            echo "   → 无变化（$SHA_Begin）"
+            echo "   → 无变化（${SHA_BEGIN:0:7}）"
         fi
 
-        # 追加该仓库的 log 到 release.txt
-        if [ -f "git_log/$git_folder/$OUTPUT_FILE.log" ]; then
-            echo "   ✓ 找到 $OUTPUT_FILE.log，已追加"
-            cat "git_log/$git_folder/$OUTPUT_FILE.log" >> release.txt
-            echo "" >> release.txt
-        else
-            echo "   ✗ 未找到 $OUTPUT_FILE.log"
-        fi
-
-        echo "$git_folder/$OUTPUT_FILE 比对结束 -------------------------------"
-        echo ""
+        cat "$BLOCK" >> release.txt
+        echo "" >> release.txt
     done
 
-    # [改动] 整个分类都没有任何变化时给一句说明；有新提交则不输出
     if [ "$UPDATE_COUNT" -eq 0 ]; then
-        echo "本分类所有仓库均无新提交...... :zzz:" >> release.txt                          # [改动]
+        echo "本分类所有仓库均无新提交...... :zzz:" >> release.txt
         echo "" >> release.txt
     fi
+    rm -f "$seen_list"
+    echo "   📊 $folder 分类：有变化/新建基线 $UPDATE_COUNT 个仓库"
 done
 
-# ------------------------------------------------------------
-# 清理：只保留 release.txt，其余临时 txt 全部删除
-# ------------------------------------------------------------
-cd $GITHUB_WORKSPACE
-find . -type f -name "*.txt" ! -name "release.txt" -exec rm {} +
+# ============================================================
+# 三、清理
+# ============================================================
+cd "$GITHUB_WORKSPACE" || exit 1
+find . -maxdepth 1 -type f -name '*.txt' ! -name 'release.txt' -delete
 rm -rf git_repositories
-
 echo "==== release.txt 生成完毕 ===="
