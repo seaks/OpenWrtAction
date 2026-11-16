@@ -98,15 +98,15 @@ process_repo() {
     fi
     echo "find feeds.conf file: $feeds_file"
     case "$platform" in
-        openwrt)
+        immortalwrt_master)
             sed -i -e 's|git.openwrt.org/feed|github.com/openwrt|g' -e 's|git.openwrt.org/project|github.com/openwrt|g' "$feeds_file"
-            openwrt_REPO_URLS+=("$repo_url $repo_branch")
+            immortalwrt_master_REPO_URLS+=("$repo_url $repo_branch")
             ;;
         immortalwrt)
             immortalwrt_REPO_URLS+=("$repo_url $repo_branch")
             ;;
         lede)
-            immortalwrt_master_REPO_URLS+=("$repo_url $repo_branch")
+            lede_REPO_URLS+=("$repo_url $repo_branch")
             ;;
     esac
     while IFS= read -r line; do
