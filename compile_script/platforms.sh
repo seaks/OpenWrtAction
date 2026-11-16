@@ -5,7 +5,7 @@ source_code_platforms=(immortalwrt_master immortalwrt)
 immortalwrt_master_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
   "REPO_BRANCH": "master",
-  "CONFIGS": "config/immortalwrt_master",
+  "CONFIGS": "config/immortalwrt_master/master.config",
   "DIY_P1_SH": "diy_script/openwrt_diy/diy-part1.sh",
   "DIY_P2_SH": "diy_script/openwrt_diy/diy-part2.sh",
   "DIY_P3_SH": "diy_script/openwrt_diy/diy-part3.sh",
@@ -15,7 +15,7 @@ immortalwrt_master_value='{
 immortalwrt_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
   "REPO_BRANCH": "openwrt-25.12",
-  "CONFIGS": "config/immortalwrt_config",
+  "CONFIGS": "config/immortalwrt_config/release.config",
   "DIY_P1_SH": "diy_script/immortalwrt_diy/diy-part1.sh",
   "DIY_P2_SH": "diy_script/immortalwrt_diy/diy-part2.sh",
   "DIY_P3_SH": "diy_script/immortalwrt_diy/diy-part3.sh"
@@ -30,8 +30,8 @@ lede_value='{
   "DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
 }'
 
-immortalwrt_master_platforms=(X86_master)
-immortalwrt_platforms=(X86)
+immortalwrt_master_platforms=(master)
+immortalwrt_platforms=(release)
 lede_platforms=(X86)
 
 matrix_json="["
