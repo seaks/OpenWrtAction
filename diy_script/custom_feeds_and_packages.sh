@@ -19,6 +19,8 @@ export repos=(
   "src-git tower https://github.com/kenzok8/openwrt-tower.git"
   "src-git honk https://github.com/kenzok8/openwrt-honk"
   "src-git small https://github.com/kenzok8/small"
+  "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
+
 )
 
 # 自定义软件包列表
@@ -35,29 +37,12 @@ clone_custom_packages () {
     rm -rf ${path}
     mkdir -p ${path}
 
-    # 主题
-    git clone https://github.com/itsmaiGe/luci-theme-7dollar.git ${path}luci-theme-7dollar
-    
+    # 主题    
     git clone https://github.com/jerrykuku/luci-theme-argon.git ${path}luci-theme-argon
 
-    git clone https://github.com/mrjoechen/luci-theme-carbon.git ${path}luci-theme-carbon
-
-    git clone https://github.com/sirpdboy/luci-theme-kucat.git ${path}luci-theme-kucat
-    git clone https://github.com/sirpdboy/luci-app-kucat-config.git ${path}luci-app-kucat-config
-
-    git clone https://github.com/eamonxg/luci-theme-aurora.git ${path}luci-theme-aurora
-
-    git clone https://github.com/derisamedia/luci-theme-arwi.git ${path}luci-theme-arwi
-
-    git clone https://github.com/derisamedia/luci-theme-alpha.git ${path}luci-theme-alpha
-    git clone https://github.com/animegasan/luci-app-alpha-config.git ${path}luci-app-alpha-config
-
-    git clone https://github.com/AngelaCooljx/luci-theme-material3.git ${path}luci-theme-material3
-
     git clone https://github.com/anothaDev/luci-theme-vantage.git ${path}luci-theme-vantage
+    
 
-
-    # git clone https://github.com/hakureiyuyuko/luci-theme-ctmodem.git ${path}luci-theme-ctmodem
     # 该主题 Makefile 使用相对路径 ../../luci.mk, 在 package/custom_packages 下无法找到, 改为 feeds 中的路径
     # sed -i 's#^include[[:blank:]]\+\.\./\.\./luci\.mk#include $(TOPDIR)/feeds/luci/luci.mk#' "${path}luci-theme-ctmodem/luci-theme-ctmodem/Makefile"
 
@@ -65,16 +50,8 @@ clone_custom_packages () {
 
     git clone https://github.com/sirpdboy/netspeedtest.git ${path}netspeedtest
 
-    # git clone https://github.com/pymumu/openwrt-smartdns.git ${path}openwrt-smartdns
-    git clone https://github.com/pymumu/luci-app-smartdns.git ${path}luci-app-smartdns
-
     git clone https://github.com/timsaya/openwrt-bandix.git ${path}openwrt-bandix
     git clone https://github.com/timsaya/luci-app-bandix.git ${path}luci-app-bandix
-
-    git clone https://github.com/timsaya/openwrt-bandix-plus.git ${path}openwrt-bandix-plus
-    git clone https://github.com/timsaya/luci-app-bandix-plus.git ${path}luci-app-bandix-plus
-    
-    # git clone https://github.com/destan19/OpenAppFilter.git ${path}OpenAppFilter
 
     
 
