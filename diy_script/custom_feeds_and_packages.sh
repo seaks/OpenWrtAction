@@ -19,7 +19,6 @@ export repos=(
   "src-git tower https://github.com/kenzok8/openwrt-tower.git"
   "src-git honk https://github.com/kenzok8/openwrt-honk"
   "src-git small https://github.com/kenzok8/small"
-  "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
 
 )
 
