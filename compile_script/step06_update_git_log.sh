@@ -28,7 +28,7 @@ echo "  <tr>">>release.txt
 echo "    <th>平台</th>">>release.txt
 echo "    <th>源码平台</th>">>release.txt
 echo "    <th>内核</th>">>release.txt
-echo "    <th>目标机型</th>">>release.txt
+echo "    <th>机型</th>">>release.txt
 echo "    <th>编译状态</th>">>release.txt
 echo "  </tr>">>release.txt
 
@@ -56,12 +56,12 @@ for git_folder in "${git_folders[@]}"; do
 
     if [[ "$git_folder" == "feeds" ]]; then
         echo "">>release.txt
-        echo "### feeds更新" >>release.txt
+        echo "### feeds更新记录" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "custompackages" ]]; then
         echo "">>release.txt
-        echo "### 自定义软件包" >>release.txt
+        echo "### 软件包更新记录" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt" || "$git_folder" == "lede" ]]; then
@@ -183,7 +183,7 @@ for git_folder in "${git_folders[@]}"; do
         echo ""
     done
     if [ "$UPDATE_COUNT" -eq 0 ]; then
-        echo "源码无更新...... :zzz:">>release.txt
+        echo "源码已是最新...... :zzz:">>release.txt
     fi
 done
 
