@@ -93,7 +93,7 @@ echo "🎉 移植完毕"
 #-----------------------------------------------修改脚本------------------------------------------------------------
 
 # rm appfilter
-rm -rf ./feeds/packages/net/open-app-filter
+# rm -rf ./feeds/packages/net/open-app-filter
 
 # Modify default IP
 sed -i 's/192.168.1.1/192.168.101.1/g' package/base-files/files/bin/config_generate
