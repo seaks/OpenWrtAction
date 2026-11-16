@@ -11,10 +11,10 @@ cd "$GITHUB_WORKSPACE" || exit 1
 # 说明：bash 变量名不能含横杠，故内部一律用下划线；显示名在这里还原成横杠
 # ------------------------------------------------------------
 declare -A FOLDER_TITLE=(
-    [immortalwrt]="immortalwrt Release"
+    [immortalwrt]="immortalwrt 25.12"
     [immortalwrt_master]="immortalwrt master"
-    [feeds]="Feeds 更新内容"
-    [custompackages]="软件包更新内容"
+    [feeds]="通用 Feeds"
+    [custompackages]="自定义软件包"
 )
 declare -A FOLDER_ARTIFACT=(
     [immortalwrt]="immortalwrt"
