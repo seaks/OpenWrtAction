@@ -4,7 +4,7 @@
 source $GITHUB_WORKSPACE/compile_script/platforms.sh
 
 # 声明全局数组
-declare -a immortalwrt-master_REPO_URLS=() 
+declare -a immortalwrt_master_REPO_URLS=() 
 declare -a immortalwrt_REPO_URLS=()
 declare -a lede_REPO_URLS=() 
 declare -a all_REPO_URLS=()
@@ -106,7 +106,7 @@ process_repo() {
             immortalwrt_REPO_URLS+=("$repo_url $repo_branch")
             ;;
         lede)
-            lede_REPO_URLS+=("$repo_url $repo_branch")
+            immortalwrt_master_REPO_URLS+=("$repo_url $repo_branch")
             ;;
     esac
     while IFS= read -r line; do
@@ -118,7 +118,7 @@ process_repo() {
                 entry="$url"
                 [[ -n "$branch" ]] && entry="$url $branch"
                 case "$platform" in
-                    openwrt) openwrt_REPO_URLS+=("$entry") ;;
+                    immortalwrt_master) immortalwrt_master_REPO_URLS+=("$entry") ;;
                     immortalwrt) immortalwrt_REPO_URLS+=("$entry") ;;
                     lede) lede_REPO_URLS+=("$entry") ;;
                 esac
