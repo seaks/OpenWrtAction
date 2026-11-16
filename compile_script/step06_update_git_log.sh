@@ -2,8 +2,7 @@
 source $GITHUB_WORKSPACE/compile_script/main_and_feeds_url.sh
 
 release_tag=$1
-git_folders=(immortalwrt feeds custompackages)   # [改动] 移除 openwrt 与 lede，仅保留 immortalwrt / feeds / 自定义包
-
+git_folders=(immortalwrt immortalwrt_master feeds custompackages)   
 cd $GITHUB_WORKSPACE
 
 # ------------------------------------------------------------
