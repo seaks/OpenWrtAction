@@ -30,7 +30,7 @@ lede_value='{
   "DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
 }'
 
-immortalwrt_master=(X86)
+immortalwrt_master_platforms=(X86)
 immortalwrt_platforms=(X86)
 lede_platforms=(X86)
 
