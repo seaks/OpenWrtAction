@@ -1,0 +1,9 @@
+<details> <summary> <b>video new commit log :rocket: </b> </summary>
+
+#### [:mega: Full Changelog. ](https://github.com/openwrt/video/compare/97137d9e4bbf2d5b8fc74b49d2a8641f21855032...7d3dcdebda95e50604cf068ed9b8fef29c94069e)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+7d3dcde|Daniel Golle|Sat Nov 14 11:51:50 2026 +0000|mesa: use pending and upstream patches for panfrost and LLVM 23
+</details>
