@@ -55,7 +55,7 @@ fi
 # 选取对应源码平台的构建矩阵
 # ------------------------------------------------------------------------------
 case "$source_code_platform" in
-    openwrt)    selected_platforms=("${openwrt_platforms[@]}")    ;;
+    immortalwrt_master)    selected_platforms=("${immortalwrt_master_platforms[@]}")    ;;
     immortalwrt) selected_platforms=("${immortalwrt_platforms[@]}") ;;
     lede)       selected_platforms=("${lede_platforms[@]}")       ;;
     *)
