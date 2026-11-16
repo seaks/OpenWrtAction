@@ -1,0 +1,10 @@
+<details> <summary> <b>openwrt-passwall-packages 新提交日志 :rocket: </b> </summary>
+
+#### [:mega: 查看完整变更记录。 ](https://github.com/Openwrt-Passwall/openwrt-passwall-packages/compare/efc4093be1477b66b95a33ca00e7a9d819ebc8fb...8147e8bf8abc62b5357f76defa37f380e35f6e0a)  
+:heavy_exclamation_mark: 列表仅展示最新15条提交记录。  
+
+哈希值|作者|提交时间|提交说明
+-|-|-|-
+8147e8b|David Mandy|Mon Nov 16 19:52:17 2026 +0800|v2ray-geosite: update to 202611152204 (#779)
+7354219|David Mandy|Mon Nov 16 19:52:03 2026 +0800|v2ray-geoip: update to 202611120018 (#778)
+</details>

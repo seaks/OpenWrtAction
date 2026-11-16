@@ -1,0 +1,9 @@
+<details> <summary> <b>openwrt-clashoo 新提交日志 :rocket: </b> </summary>
+
+#### [:mega: 查看完整变更记录。 ](https://github.com/kenzok8/openwrt-clashoo/compare/7c8892a626aadd6a7d7a6849210c95102800a066...0edc441ec5f2771de6e5e6843616c2bce22f2cb3)  
+:heavy_exclamation_mark: 列表仅展示最新15条提交记录。  
+
+哈希值|作者|提交时间|提交说明
+-|-|-|-
+0edc441|github-actions[bot]|Mon Nov 16 11:49:26 2026 +0000|chore: refresh clashoo rule data
+</details>
