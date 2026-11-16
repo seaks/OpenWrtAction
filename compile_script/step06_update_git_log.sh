@@ -64,7 +64,7 @@ for git_folder in "${git_folders[@]}"; do
         echo "### 软件包更新记录" >>release.txt
         echo "">>release.txt
     fi
-    if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt" || "$git_folder" == "lede" ]]; then
+    if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt" ]]; then
         echo "">>release.txt
         echo "### $git_folder" >>release.txt
         echo "">>release.txt
@@ -77,7 +77,7 @@ for git_folder in "${git_folders[@]}"; do
         BRANCH=$(echo "$url" | awk '{print $2}')
         OUTPUT_FILE="${REPO_URL##*/}"
         OUTPUT_FILE="${OUTPUT_FILE%.git}"  # 移除.git后缀
-        TITLE_MESSAGE="${OUTPUT_FILE} 新提交日志"
+        TITLE_MESSAGE="${OUTPUT_FILE} new commit log"
 
         # 克隆仓库
         if [ -n "$BRANCH" ]; then
@@ -87,39 +87,39 @@ for git_folder in "${git_folders[@]}"; do
         fi
 
         # ==========================================
-        # 👑 核心一致性改造：获取基准提交哈希 (单一可信源原则)
-        # 不再盲目使用远端 HEAD，强制校验构建产物里的历史记录
+        # 👑 核心一致性改造：获取真理 SHA (SSoT 原则)
+        # 不再盲目使用远端 HEAD，强制校验 Artifact 里的历史记录
         # ==========================================
         SHA_End=""
         
-        # 1. 优先尝试从对应平台的产物日志中提取 (针对主源码库)
+        # 1. 优先尝试从对应平台的 artifact 日志中提取 (针对主源码库)
         if [ -f "git_log_${git_folder}.txt" ]; then
             SHA_End=$(grep "^${OUTPUT_FILE}:" "git_log_${git_folder}.txt" 2>/dev/null | cut -d: -f2)
         fi
         
-        # 2. 如果没找到，扫描所有下载下来的产物日志匹配 (针对 feeds 和 custompackages)
+        # 2. 如果没找到，扫描所有下载下来的 artifact 日志匹配 (针对 feeds 和 custompackages)
         if [ -z "$SHA_End" ]; then
             SHA_End=$(grep -h "^${OUTPUT_FILE}:" git_log_*.txt 2>/dev/null | head -n 1 | cut -d: -f2)
         fi
 
-        # 3. 防呆兜底：如果步骤03真的漏了，安全降级使用最新 HEAD 防止脚本崩溃
+        # 3. 防呆兜底：如果 step03 真的漏了，安全降级使用最新 HEAD 防止脚本崩溃
         if [ -z "$SHA_End" ]; then
             SHA_End=$(git -C "git_repositories/$git_folder/$OUTPUT_FILE" rev-parse HEAD)
-            echo "   ⚠️ [降级兜底] 未在构建产物中找到 $OUTPUT_FILE 记录，使用远端最新 HEAD: $SHA_End"
+            echo "   ⚠️ [Fallback] 未在 Artifact 中找到 $OUTPUT_FILE 记录，使用最新 HEAD: $SHA_End"
         else
-            echo "   ✅ [单一可信源匹配成功] 锁定基准提交哈希 ($OUTPUT_FILE): $SHA_End"
+            echo "   ✅ [SSoT 匹配成功] 锁定真理 SHA ($OUTPUT_FILE): $SHA_End"
         fi
         # ==========================================
 
-        echo "$git_folder-$OUTPUT_FILE 开始更新提交日志-----------------------------------------------------------"
-        echo "结束哈希:$SHA_End"
+        echo "$git_folder-$OUTPUT_FILE Begin git log update-----------------------------------------------------------"
+        echo "SHAEnd:$SHA_End"
 
         LOG_FILE="git_log/$git_folder/log"
         ensure_log_trailing_newline "$LOG_FILE"
 
         # 检查 log 文件是否存在且是否包含 OUTPUT_FILE 条目
         SHA_Begin=$(grep "^${OUTPUT_FILE}:" "$LOG_FILE" | cut -d: -f2)
-        echo "起始哈希:$SHA_Begin"
+        echo "SHABegin:$SHA_Begin"
 
         # 如果 log 文件不存在或为空，或者没有 OUTPUT_FILE 条目，初始化 log 文件
         if [ ! -f "$LOG_FILE" ] || ! grep -q "^${OUTPUT_FILE}:" "$LOG_FILE"; then
@@ -129,10 +129,10 @@ for git_folder in "${git_folders[@]}"; do
 
         # 检查 SHA 是否有效
         if ! git -C "git_repositories/$git_folder/$OUTPUT_FILE" cat-file -t "$SHA_Begin" >/dev/null 2>&1 && [ -n "$SHA_Begin" ]; then
-            echo "     :x: 检测到无效哈希 (起始: $SHA_Begin, 结束: $SHA_End) 仓库: $OUTPUT_FILE"
+            echo "     :x: Invalid SHA detected (Begin: $SHA_Begin, End: $SHA_End) for $OUTPUT_FILE"
             echo "<details> <summary> <b>$TITLE_MESSAGE :x: </b> </summary>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-            echo "<b>检测到 $OUTPUT_FILE 存在非法提交哈希，该仓库大概率发生了 git 变基操作，本次无法统计更新记录，请等待下次编译。</b>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
+            echo "<b> It is detected that $OUTPUT_FILE has an illegal SHA value. It is possible that $OUTPUT_FILE has git rebase behavior. The relevant git update log cannot be counted. Please wait for the next compilation time.</b>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "</details>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             sed -i "s/^${OUTPUT_FILE}:.*/${OUTPUT_FILE}:${SHA_End}/" "$LOG_FILE"
@@ -141,16 +141,16 @@ for git_folder in "${git_folders[@]}"; do
             echo "<details> <summary> <b>$TITLE_MESSAGE :rocket: </b> </summary>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             if [ -z "$SHA_Begin" ]; then
-                echo "<b>首次记录 $OUTPUT_FILE 提交日志，无历史哈希。</b>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                echo "<b>Initial commit log for $OUTPUT_FILE, no previous SHA.</b>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             else
                 # 去除链接末尾可能包含的 .git 后缀，以保证 GitHub 链接格式正确
                 CLEAN_REPO_URL="${REPO_URL%.git}"
                 # 拼接 GitHub 的 Compare 链接
                 COMPARE_URL="${CLEAN_REPO_URL}/compare/${SHA_Begin}...${SHA_End}"
-                echo "#### [:mega: 查看完整变更记录。 ](${COMPARE_URL})  " >>"git_log/$git_folder/$OUTPUT_FILE.log";
-                echo ":heavy_exclamation_mark: 列表仅展示最新15条提交记录。  " >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                echo "#### [:mega: Full Changelog. ](${COMPARE_URL})  " >>"git_log/$git_folder/$OUTPUT_FILE.log";
+                echo ":heavy_exclamation_mark: The list displays only the latest 15 commit logs.  " >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-                echo "哈希值|作者|提交时间|提交说明" >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                echo "SHA|Author|Date|Message" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "-|-|-|-" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | head -n 15 >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 if [ $(git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | wc -l) -gt 15 ]; then 
@@ -160,7 +160,7 @@ for git_folder in "${git_folders[@]}"; do
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "</details>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "     |-----------------------------------|"
-            echo "     $OUTPUT_FILE 已生成更新日志"
+            echo "     $OUTPUT_FILE has update log"
             echo "     |-----------------------------------|"
             sed -i "s/^${OUTPUT_FILE}:.*/${OUTPUT_FILE}:${SHA_End}/" "$LOG_FILE"
             UPDATE_COUNT=$((UPDATE_COUNT + 1))
@@ -171,12 +171,12 @@ for git_folder in "${git_folders[@]}"; do
 
         # 将生成的 .log 文件追加到 release.txt
         if [ -f "git_log/$git_folder/$OUTPUT_FILE.log" ]; then
-            echo "找到日志文件 $OUTPUT_FILE.log!"
+            echo "found file $OUTPUT_FILE.log!"
             cat "git_log/$git_folder/$OUTPUT_FILE.log" >>release.txt
         else
-            echo "未找到日志文件 $OUTPUT_FILE.log"
+            echo "no file $OUTPUT_FILE.log 404"
         fi
-        echo "$git_folder-$OUTPUT_FILE 提交日志更新完成-----------------------------------------------------------"
+        echo "$git_folder-$OUTPUT_FILE complete git log update-----------------------------------------------------------"
         echo "==========================================================================================================="
         echo ""
         echo ""
