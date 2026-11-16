@@ -1,7 +1,8 @@
 #!/bin/bash
 source $GITHUB_WORKSPACE/compile_script/main_and_feeds_url.sh
+
 release_tag=$1
-git_folders=(openwrt immortalwrt lede feeds custompackages)
+git_folders=(immortalwrt feeds custompackages)   # [改动] 移除 openwrt 与 lede，仅保留 immortalwrt / feeds / 自定义包
 
 cd $GITHUB_WORKSPACE
 
@@ -24,7 +25,7 @@ echo "[![](https://img.shields.io/github/downloads/${REPO_SLUG}/${release_tag}/t
 
 echo "" >> release.txt
 echo "## 源码信息" >> release.txt                                    # [改动] Source Code Information
-echo "[![](https://img.shields.io/badge/source-openwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/openwrt/openwrt) [![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/source-lean_SNAPSHOT-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/coolsnowwolf/lede)" >> release.txt
+echo "[![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)" >> release.txt   # [改动] 去掉 openwrt 25.12 与 lean SNAPSHOT 徽章
 echo "" >> release.txt
 
 echo "## 构建信息" >> release.txt                                    # [改动] Build Information
