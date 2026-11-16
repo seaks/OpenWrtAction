@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source_code_platforms=(immortalwrt immortalwrt-master)
+source_code_platforms=(immortalwrt immortalwrt_master)
 
-immortalwrt-master_value='{
+immortalwrt_master_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
   "REPO_BRANCH": "master",
-  "CONFIGS": "config/immortalwrt-master_config",
+  "CONFIGS": "config/immortalwrt_master_config",
   "DIY_P1_SH": "diy_script/openwrt_diy/diy-part1.sh",
   "DIY_P2_SH": "diy_script/openwrt_diy/diy-part2.sh",
   "DIY_P3_SH": "diy_script/openwrt_diy/diy-part3.sh",
@@ -30,7 +30,7 @@ lede_value='{
   "DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
 }'
 
-immortalwrt-master=(X86)
+immortalwrt_master=(X86)
 immortalwrt_platforms=(X86)
 lede_platforms=(X86)
 
