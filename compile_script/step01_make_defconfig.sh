@@ -4,8 +4,8 @@ source_code_platform=$1
 CONFIGS=$2
 Is_Copy_Seeds=$3
 
-if [[ "$source_code_platform" == "immortalwrt-master" ]]; then
-  selected_platforms=("${immortalwrt-master_platforms[@]}")
+if [[ "$source_code_platform" == "immortalwrt_master" ]]; then
+  selected_platforms=("${immortalwrt_master_platforms[@]}")
 elif [[ "$source_code_platform" == "immortalwrt" ]]; then
   selected_platforms=("${immortalwrt_platforms[@]}")
 elif [[ "$source_code_platform" == "lede" ]]; then
