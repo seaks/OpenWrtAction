@@ -1,11 +1,11 @@
-<details> <summary> <b>openwrt-ghfu new commit log :rocket: </b> </summary>
+<details> <summary> <b>openwrt-ghfu 新提交记录 :rocket: </b> </summary>
 
-#### [:mega: Full Changelog. ](https://github.com/smallprogram/openwrt-ghfu/compare/1f06bd2ffc6f897a71d96543faa99767833be5f1...304b561b101557c374aa3d752632720e3ef7af94)  
-:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+#### [:mega: 查看完整变更记录](https://github.com/smallprogram/openwrt-ghfu/compare/304b561b101557c374aa3d752632720e3ef7af94...1f06bd2ffc6f897a71d96543faa99767833be5f1)  
+:heavy_exclamation_mark: 列表仅展示最近 15 条提交。  
 
-SHA|Author|Date|Message
+提交|作者|日期|说明
 -|-|-|-
-304b561|seaks|Mon Nov 16 08:57:16 2026 +0800|Update README.md
-02b2caa|seaks|Mon Nov 16 08:55:02 2026 +0800|Update ghfu.po
-b7641ec|seaks|Mon Nov 16 08:54:24 2026 +0800|Update GitHub repository in defaults script
+304b561|seaks|2026-11-16|Update README.md
+02b2caa|seaks|2026-11-16|Update ghfu.po
+b7641ec|seaks|2026-11-16|Update GitHub repository in defaults script
 </details>
