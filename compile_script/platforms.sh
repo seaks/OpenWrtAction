@@ -30,8 +30,8 @@ lede_value='{
   "DIY_P3_SH": "diy_script/lean_diy/diy-part3.sh"
 }'
 
-immortalwrt_master_platforms=(x86_master)
-immortalwrt_platforms=(x86_release)
+immortalwrt_master_platforms=(X86_Master)
+immortalwrt_platforms=(X86_Release)
 lede_platforms=(X86)
 
 matrix_json="["
