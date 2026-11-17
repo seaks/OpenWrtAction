@@ -1,9 +1,0 @@
-<details> <summary> <b>luci new commit log :rocket: </b> </summary>
-
-#### [:mega: Full Changelog. ](https://github.com/immortalwrt/luci/compare/ad75cde88e694b511100576bfbe0a280e5efe6ef...a6adca3c8f91ecc7c43dd04d3c23b252135c6c53)  
-:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
-
-SHA|Author|Date|Message
--|-|-|-
-a6adca3c8f|Aethersailor|Tue Nov 17 17:27:13 2026 +0800|luci-theme-argon: bump to 3.1.4
-</details>
