@@ -268,6 +268,7 @@ jobs:
           retention-days: 5
           overwrite: true
 
+      # >>> 改动 1：生成公钥 .pub 文件 <<<
       - name: Configure Git & SSH signing
         env:
           TAG_SIGN_KEY: ${{ secrets.TAG_SIGN_KEY }}
@@ -279,6 +280,9 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "$TAG_SIGN_KEY" > ~/.ssh/ci_sign_key
           chmod 600 ~/.ssh/ci_sign_key
+
+          # 从私钥推导公钥，确保 .pub 文件实际存在
+          ssh-keygen -y -f ~/.ssh/ci_sign_key > ~/.ssh/ci_sign_key.pub
 
           git config gpg.format ssh
           git config user.signingkey ~/.ssh/ci_sign_key.pub
@@ -574,8 +578,9 @@ jobs:
           )
           for target in "${LONG_TIME_TARGETS_COMPILE[@]}"; do
               echo "==== 正在执行 compile $target ===="
-              if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
-                  time make $target -j$(nproc) V=s || exit 1
+              # >>> 改动 3：fromJSON 去掉，改为字符串比较 <<<
+              if [[ "${{ github.run_attempt }}" == "3" ]]; then
+                  time make $target -j1 V=s || exit 1
                   sleep 5
                   echo "------------------------"
               else
@@ -684,6 +689,7 @@ jobs:
           cd $GITHUB_WORKSPACE/openwrt
           timeout 25m make download -j8
 
+      # >>> 改动 4：Compile Packages and Firmware —— 第三次改 -j1，去掉 fromJSON <<<
       - name: Compile Packages and Firmware
         id: compile
         if: steps.matrix_status.outputs.status != 'success' && !cancelled()
@@ -700,8 +706,8 @@ jobs:
           fi
           
 
-          if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
-              make -j$(nproc) V=s
+          if [[ "${{ github.run_attempt }}" == "3" ]]; then
+              make -j1 V=s
               MAKE_EXIT_CODE=$?
               exit $MAKE_EXIT_CODE
           else
