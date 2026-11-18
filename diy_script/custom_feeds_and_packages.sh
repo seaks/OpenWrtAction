@@ -37,7 +37,7 @@ clone_custom_packages () {
     mkdir -p ${path}
 
     # 主题    
-    git clone https://github.com/jerrykuku/luci-theme-argon.git ${path}luci-theme-argon
+    git clone https://github.com/seaks/luci-theme-argon.git ${path}luci-theme-argon
 
     git clone https://github.com/anothaDev/luci-theme-vantage.git ${path}luci-theme-vantage
     
