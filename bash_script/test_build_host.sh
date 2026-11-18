@@ -20,7 +20,7 @@ All_TARGETS=(
     "package/boot/grub2/host/compile"
     "package/feeds/luci/luci-base/host/compile"
     "package/feeds/packages/golang-bootstrap/host/compile"
-    "package/feeds/packages/golang1.26/host/compile"
+    "package/feeds/packages/golang1.27/host/compile"
     "package/feeds/packages/golang/host/compile"
     "package/feeds/packages/libffi/host/compile"
     "package/utils/bzip2/host/compile"
