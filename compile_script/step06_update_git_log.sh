@@ -77,7 +77,7 @@ for git_folder in "${git_folders[@]}"; do
         BRANCH=$(echo "$url" | awk '{print $2}')
         OUTPUT_FILE="${REPO_URL##*/}"
         OUTPUT_FILE="${OUTPUT_FILE%.git}"  # 移除.git后缀
-        TITLE_MESSAGE="${OUTPUT_FILE} new commit log"
+        TITLE_MESSAGE="${OUTPUT_FILE} 更新日志"
 
         # 克隆仓库
         if [ -n "$BRANCH" ]; then
@@ -148,7 +148,7 @@ for git_folder in "${git_folders[@]}"; do
                 # 拼接 GitHub 的 Compare 链接
                 COMPARE_URL="${CLEAN_REPO_URL}/compare/${SHA_Begin}...${SHA_End}"
                 echo "#### [:mega: 更新日志. ](${COMPARE_URL})  " >>"git_log/$git_folder/$OUTPUT_FILE.log";
-                echo ":heavy_exclamation_mark: The list displays only the latest 15 commit logs.  " >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                echo ":heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  " >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "SHA|Author|Date|Message" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "-|-|-|-" >>"git_log/$git_folder/$OUTPUT_FILE.log"
