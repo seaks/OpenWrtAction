@@ -78,10 +78,15 @@ inject_feed() {
 # 执行注入任务 (注意这里的目标目录直接是 feeds 对应的实际目录)
 # =================================================================
 
-# 1. 注入基础依赖包
+# 1. 注入基础依赖包（golang 改用 sbwml，此处仅注入 rust）
 inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
-    "lang/golang" \
     "lang/rust"
+
+# 2. 替换 golang 为 sbwml/packages_lang_golang 27.x
+echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
+rm -rf feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 27.x feeds/packages/lang/golang
+echo "✅ golang 替换完成"
 
 # inject_feed "https://github.com/openwrt/luci.git" "feeds/luci/modules" \
 #     "modules/luci-mod-dashboard"
