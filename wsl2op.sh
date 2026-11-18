@@ -114,8 +114,8 @@ fi
 
 
 Func_LogMessage "请选择要编译的平台：" "Please choose the configuration file to import:"
-Func_LogMessage "1) openwrt" "1) platform_openwrt.sh"
-Func_LogMessage "2) immortalwrt" "2) platform_immortalwrt.sh"
+Func_LogMessage "1) immortalwrt_master" "1) platform_immortalwrt_master.sh"
+Func_LogMessage "2) immortalwrt_snapshot" "2) platform_immortalwrt_snapshot.sh"
 Func_LogMessage "3) lean" "3) platform_lean.sh"
 Func_LogMessage "将在15秒后默认选择 platform_openwrt.sh..." "The default choice will be platform_openwrt.sh in 15 seconds..."
 
@@ -125,12 +125,12 @@ echo
 # 根据用户输入选择对应的配置文件
 case $choice in
     1)
-        Func_LogMessage "选择 platform_openwrt.sh" "Selected platform_openwrt.sh"
-        source ./platform_openwrt.sh
+        Func_LogMessage "选择 platform_immortalwrt_master.sh" "Selected platform_immortalwrt_master.sh"
+        source ./platform_immortalwrt_master.sh
         ;;
     2)
-        Func_LogMessage "选择 platform_immortalwrt.sh" "Selected platform_immortalwrt.sh"
-        source ./platform_immortalwrt.sh
+        Func_LogMessage "选择 platform_immortalwrt_snapshot.sh" "Selected platform_immortalwrt_snapshot.sh"
+        source ./platform_immortalwrt_snapshot.sh
         ;;
     3)
         Func_LogMessage "选择 platform_lean.sh" "Selected platform_lean.sh"
