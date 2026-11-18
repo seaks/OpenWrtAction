@@ -1,7 +1,7 @@
 #!/bin/bash
 source $GITHUB_WORKSPACE/compile_script/main_and_feeds_url.sh
 release_tag=$1
-git_folders=( immortalwrt_master immortalwrt  feeds custompackages)
+git_folders=( immortalwrt_master immortalwrt_snapshot  feeds custompackages)
 
 cd $GITHUB_WORKSPACE
 
@@ -15,18 +15,18 @@ ensure_log_trailing_newline() {
 }
 
 # 初始化 release.txt
-echo "[![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/$release_tag/total?style=flat-square)](https://github.com/seaks/MyAction)"> release.txt
+echo "[![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/$release_tag/total?style=flat-square)](https://github.com/seaks/OpenWrtAction)"> release.txt
 
 echo "">> release.txt
-echo "## 源代码信息">> release.txt
-echo "[![](https://img.shields.io/badge/source-immortalwrt_master-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/source-immortalwrt_25.12-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)">> release.txt
+echo "## 源码信息">> release.txt
+echo "[![](https://img.shields.io/badge/source-immortalwrt_master-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/source-immortalwrt_snapshot-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt/tree/openwrt-25.12)">> release.txt
 echo "">>release.txt
 echo "## 编译信息">> release.txt
 
 echo "<table>">>release.txt
 echo "  <tr>">>release.txt
-echo "    <th>平台</th>">>release.txt
-echo "    <th>源码平台</th>">>release.txt
+echo "    <th>版本</th>">>release.txt
+echo "    <th>源码</th>">>release.txt
 echo "    <th>内核</th>">>release.txt
 echo "    <th>机型</th>">>release.txt
 echo "    <th>编译状态</th>">>release.txt
@@ -56,7 +56,7 @@ for git_folder in "${git_folders[@]}"; do
 
     if [[ "$git_folder" == "feeds" ]]; then
         echo "">>release.txt
-        echo "### feeds更新记录" >>release.txt
+        echo "### FEEDS 源更新记录" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "custompackages" ]]; then
@@ -64,7 +64,7 @@ for git_folder in "${git_folders[@]}"; do
         echo "### 软件包更新记录" >>release.txt
         echo "">>release.txt
     fi
-    if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt" ]]; then
+    if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt_snapshot" ]]; then
         echo "">>release.txt
         echo "### $git_folder" >>release.txt
         echo "">>release.txt
@@ -147,7 +147,7 @@ for git_folder in "${git_folders[@]}"; do
                 CLEAN_REPO_URL="${REPO_URL%.git}"
                 # 拼接 GitHub 的 Compare 链接
                 COMPARE_URL="${CLEAN_REPO_URL}/compare/${SHA_Begin}...${SHA_End}"
-                echo "#### [:mega: Full Changelog. ](${COMPARE_URL})  " >>"git_log/$git_folder/$OUTPUT_FILE.log";
+                echo "#### [:mega: 更新日志. ](${COMPARE_URL})  " >>"git_log/$git_folder/$OUTPUT_FILE.log";
                 echo ":heavy_exclamation_mark: The list displays only the latest 15 commit logs.  " >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "SHA|Author|Date|Message" >>"git_log/$git_folder/$OUTPUT_FILE.log"
@@ -183,7 +183,7 @@ for git_folder in "${git_folders[@]}"; do
         echo ""
     done
     if [ "$UPDATE_COUNT" -eq 0 ]; then
-        echo "源码已是最新...... :zzz:">>release.txt
+        echo "当前已是最新...... :zzz:">>release.txt
     fi
 done
 

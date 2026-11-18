@@ -9,15 +9,15 @@ source $GITHUB_WORKSPACE/compile_script/platforms.sh
 # echo "[![](https://img.shields.io/github/downloads/seaks/OpenWrtAction/$release_tag/total?style=flat-square)](https://github.com/seaks/MyAction)">> release.txt
 # echo ""
 # echo "## 源代码信息">> release.txt
-# echo "[![](https://img.shields.io/badge/sorce-immortalwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/sorce-immortalwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/sorce-immortalwrt_master-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)
+# echo "[![](https://img.shields.io/badge/sorce-immortalwrt-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt) [![](https://img.shields.io/badge/sorce-immortalwrt_snapshot-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt/tree/openwrt-25.12) [![](https://img.shields.io/badge/sorce-immortalwrt_master-green?logo=openwrt&logoColor=green&style=flat-square)](https://github.com/immortalwrt/immortalwrt)
 # ">> release.txt
 # echo ""
 # echo "## 编译信息"
 
 # echo "<table>">>release.txt
 # echo "  <tr>">>release.txt
-# echo "    <th>平台</th>">>release.txt
-# echo "    <th>源码平台</th>">>release.txt
+# echo "    <th>版本</th>">>release.txt
+# echo "    <th>源码</th>">>release.txt
 # echo "    <th>内核</th>">>release.txt
 # echo "    <th>机型</th>">>release.txt
 # echo "    <th>编译状态</th>">>release.txt
@@ -28,7 +28,7 @@ source $GITHUB_WORKSPACE/compile_script/platforms.sh
 if [[ "$source_code_platform" == "immortalwrt_master" ]]; then
   selected_platforms=("${immortalwrt_master_platforms[@]}")
 elif [[ "$source_code_platform" == "immortalwrt" ]]; then
-  selected_platforms=("${immortalwrt_platforms[@]}")
+  selected_platforms=("${immortalwrt_snapshot_platforms[@]}")
 elif [[ "$source_code_platform" == "lede" ]]; then
   selected_platforms=("${lede_platforms[@]}")
 fi

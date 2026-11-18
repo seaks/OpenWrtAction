@@ -5,7 +5,7 @@ source $GITHUB_WORKSPACE/compile_script/platforms.sh
 
 # 声明全局数组
 declare -a immortalwrt_master_REPO_URLS=() 
-declare -a immortalwrt_REPO_URLS=()
+declare -a immortalwrt_snapshot_REPO_URLS=()
 declare -a lede_REPO_URLS=() 
 declare -a all_REPO_URLS=()
 
@@ -102,8 +102,8 @@ process_repo() {
             sed -i -e 's|git.openwrt.org/feed|github.com/openwrt|g' -e 's|git.openwrt.org/project|github.com/openwrt|g' "$feeds_file"
             immortalwrt_master_REPO_URLS+=("$repo_url $repo_branch")
             ;;
-        immortalwrt)
-            immortalwrt_REPO_URLS+=("$repo_url $repo_branch")
+        immortalwrt_snapshot)
+            immortalwrt_snapshot_REPO_URLS+=("$repo_url $repo_branch")
             ;;
         lede)
             lede_REPO_URLS+=("$repo_url $repo_branch")
@@ -119,7 +119,7 @@ process_repo() {
                 [[ -n "$branch" ]] && entry="$url $branch"
                 case "$platform" in
                     immortalwrt_master) immortalwrt_master_REPO_URLS+=("$entry") ;;
-                    immortalwrt) immortalwrt_REPO_URLS+=("$entry") ;;
+                    immortalwrt_snapshot) immortalwrt_snapshot_REPO_URLS+=("$entry") ;;
                     lede) lede_REPO_URLS+=("$entry") ;;
                 esac
             fi

@@ -7,7 +7,7 @@ log_file="git_log_${source_code_platform}.txt"
 
 echo "==== 🔍 开始收集真理源码 SHA 指纹 ===="
 
-# 1. 记录主源码仓库 (immortalwrt_master / immortalwrt)
+# 1. 记录主源码仓库 (immortalwrt_master / immortalwrt_snapshot)
 main_sha=$(git -C openwrt log -n 1 --format="%H" 2>/dev/null)
 echo "${source_code_platform}:${main_sha}" >> "$log_file"
 echo "  [Main] ${source_code_platform}: ${main_sha}"
