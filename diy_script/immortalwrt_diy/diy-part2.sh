@@ -168,4 +168,5 @@ TARGET_BIN_DIR="./bin/targets/x86/64"
 rm -f "${TARGET_BIN_DIR}/immortalwrt-x86-64-generic-ext4-rootfs.img.gz"
 rm -f "${TARGET_BIN_DIR}/immortalwrt-x86-64-generic-kernel.bin"
 
+
 echo "DIY2 is complate!"
