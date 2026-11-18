@@ -17,6 +17,17 @@ echo "DiY script part 3: is Runing"
 
 echo "修正相关package的hash值"
 
+# ===================== golang 替换为 sbwml 26.x =====================
+echo ">>> 替换 golang 为 sbwml/packages_lang_golang 26.x ..."
+rm -rf feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 26.x feeds/packages/lang/golang
+
+# 重新安装 golang 相关包（让 package/feeds/packages/ 下的符号链接指向新版本）
+./scripts/feeds install -a -p packages lang/golang
+
+echo ">>> golang 替换完成"
+# =====================================================================
+
 # -------------------------smartdns----------------------------------
 # echo "正在修正smartdns的hash值到最新版本"
 # current_path=$PWD
