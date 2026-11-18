@@ -162,11 +162,5 @@ chmod +x files/etc/uci-defaults/99-custom-ssh-config
 # --- End Modify SSH Configuration ---
 #------------------------------------------------end 修改脚本-------------------------------------------------------
 
-# ========== 清理不需要单独的 kernel.bin 和 ext4 rootfs ==========
-echo "🧹 清理多余产物：kernel.bin、ext4-rootfs.img.gz"
-TARGET_BIN_DIR="./bin/targets/x86/64"
-rm -f "${TARGET_BIN_DIR}/immortalwrt-x86-64-generic-ext4-rootfs.img.gz"
-rm -f "${TARGET_BIN_DIR}/immortalwrt-x86-64-generic-kernel.bin"
-
 
 echo "DIY2 is complate!"
