@@ -580,7 +580,7 @@ jobs:
               echo "==== 正在执行 compile $target ===="
               # >>> 改动 3：fromJSON 去掉，改为字符串比较 <<<
               if [[ "${{ github.run_attempt }}" == "2" ]]; then
-                  time make $target -j1 V=s world || exit 1
+                  time make $target -j1 V=s || exit 1
                   sleep 5
                   echo "------------------------"
               else
