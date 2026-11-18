@@ -6,7 +6,7 @@ Is_Copy_Seeds=$3
 
 if [[ "$source_code_platform" == "immortalwrt_master" ]]; then
   selected_platforms=("${immortalwrt_master_platforms[@]}")
-elif [[ "$source_code_platform" == "immortalwrt" ]]; then
+elif [[ "$source_code_platform" == "immortalwrt_snapshot" ]]; then
   selected_platforms=("${immortalwrt_snapshot_platforms[@]}")
 elif [[ "$source_code_platform" == "lede" ]]; then
   selected_platforms=("${lede_platforms[@]}")
