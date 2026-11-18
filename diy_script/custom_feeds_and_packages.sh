@@ -14,10 +14,6 @@ export repos=(
   "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
   "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
   "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
-  "src-git clashoo https://github.com/kenzok8/openwrt-clashoo.git"
-  "src-git daede https://github.com/kenzok8/openwrt-daede.git"
-  "src-git tower https://github.com/kenzok8/openwrt-tower.git"
-  "src-git honk https://github.com/kenzok8/openwrt-honk"
   "src-git small https://github.com/kenzok8/small"
 
 )
