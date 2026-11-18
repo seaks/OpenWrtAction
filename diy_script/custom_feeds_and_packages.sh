@@ -14,7 +14,7 @@ export repos=(
   "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
   "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
   "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
-  "src-git small https://github.com/kenzok8/small"
+#   "src-git small https://github.com/kenzok8/small"
 
 )
 
