@@ -1,0 +1,9 @@
+<details> <summary> <b>openwrt-passwall2 new commit log :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall2/compare/9c6d23dcf579f0a07bb2bda61011fbb31f6c904e...fbe2b6beac461bfaed6fd236ba2dde1230b94918)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+fbe2b6b|A-BO|Tue Nov 17 22:51:20 2026 +0800|luci: explicitly specify IPv6 family for nftables TPROXY rules
+</details>

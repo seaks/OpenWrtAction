@@ -1,0 +1,12 @@
+<details> <summary> <b>small new commit log :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/kenzok8/small/compare/21dc5186eca92e9dff20aac54ea90db55a17adcd...4b04a162cafbe91a8775a0f79b21c55f840e83b8)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+4b04a162|action|Tue Nov 17 22:59:48 2026 +0800|🎁 luci-app-ssr-plus: sync upstream
+a0a5883c|action|Tue Nov 17 22:59:48 2026 +0800|🎁 luci-app-passwall2: sync upstream
+80629ba9|action|Tue Nov 17 22:59:48 2026 +0800|🎁 luci-app-passwall: sync upstream
+f44cace8|action|Tue Nov 17 22:59:48 2026 +0800|🎁 luci-app-homeproxy: update to 20261117
+</details>

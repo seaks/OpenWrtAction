@@ -1,0 +1,9 @@
+<details> <summary> <b>openwrt-daede new commit log :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/kenzok8/openwrt-daede/compare/bc6fb7ca997b1de42ae3b8d67574ce5717816995...a2dfba0b27af0100a7e9cc9fe29b1b1a3deb2337)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+a2dfba0|kenzok8|Wed Nov 18 10:53:35 2026 +0800|Fix TCP relay handling for wrapped connections
+</details>

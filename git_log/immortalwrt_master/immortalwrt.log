@@ -1,0 +1,25 @@
+<details> <summary> <b>immortalwrt new commit log :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/immortalwrt/immortalwrt/compare/761b7ff22cbf7c13f28fc631bd70a84d295fd627...c4c69cfede1bd4a28fa01b9079a7eb61ef4fed4a)  
+:heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
+
+SHA|Author|Date|Message
+-|-|-|-
+c4c69cfede|Tianling Shen|Wed Nov 18 15:49:30 2026 +0800|Revert "qualcommax: add nvmem support for xiaomi ax6/ax3600/ax9000 stock layout"
+01a6d70222|Tianling Shen|Wed Nov 18 15:36:09 2026 +0800|mediatek: disable build for keenetic kap-630 series by default
+dce2683383|Tianling Shen|Wed Nov 18 14:14:37 2026 +0800|ipq806x: disable build for asrock g10 by default
+a76c22180f|Tianling Shen|Wed Nov 18 15:30:38 2026 +0800|ath79: disable build for fortinet fap-220-b by default
+7831633bc1|Tianling Shen|Wed Nov 18 15:20:23 2026 +0800|Merge Official Source
+539074d65b|Tianling Shen|Wed Nov 18 14:09:54 2026 +0800|px5g-openssl: fix RSA defaults and extension handling
+27663a017a|Zhengping Zhang|Wed Sep 23 21:13:36 2026 +0800|airoha: an7583: add PCIe PHY and controllers support
+6df68042d1|Marco Martins|Sun Nov 15 12:51:58 2026 +0000|ramips: mt7620: enable LIST_HARDENED again
+6569251835|Marco Martins|Sun Nov 15 18:42:15 2026 +0000|ramips: rt305x: keep the kernel code out of the first 32 KiB
+d1f05be244|Mieczyslaw Nalewaj|Thu Nov 12 16:12:32 2026 +0000|ramips: free the padding in front of the kernel text
+c06ccca080|Marco Martins|Sat Nov 14 18:58:33 2026 +0000|generic: mips: keep module code out of the first 32 KiB
+959a7f9ea9|Marco Martins|Thu Nov 12 19:56:54 2026 +0000|ramips: mt7620: drop the workarounds for the EPC erratum
+3c2a81d482|Marco Martins|Wed Nov 11 22:14:28 2026 +0000|ramips: mt7620: keep the kernel code out of the first 32 KiB
+5a40062b65|Anatoliy Oleinikov|Sun Nov 15 17:22:59 2026 +0300|realtek: phy: add RTL8214QF support
+651f26edfc|Anatoliy Oleinikov|Sun Nov 15 17:04:42 2026 +0300|realtek: mdio: poll RTL8214QF as a GE PHY
+
+
+</details>

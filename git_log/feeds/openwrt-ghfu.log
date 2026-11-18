@@ -1,13 +1,11 @@
 <details> <summary> <b>openwrt-ghfu new commit log :rocket: </b> </summary>
 
-#### [:mega: Full Changelog. ](https://github.com/seaks/openwrt-ghfu/compare/1f06bd2ffc6f897a71d96543faa99767833be5f1...1420e827ed8eb52cfd852fd842bd3a39debaeaf7)  
+#### [:mega: 更新日志. ](https://github.com/seaks/openwrt-ghfu/compare/1420e827ed8eb52cfd852fd842bd3a39debaeaf7...1ceccb99bcd0aac0ab069230341f638d86864199)  
 :heavy_exclamation_mark: The list displays only the latest 15 commit logs.  
 
 SHA|Author|Date|Message
 -|-|-|-
-1420e82|Action Bot|Tue Nov 17 22:38:03 2026 +0800|Update ghfu.po
-19aef17|Action Bot|Tue Nov 17 22:35:35 2026 +0800|Update ghfu
-304b561|seaks|Mon Nov 16 08:57:16 2026 +0800|Update README.md
-02b2caa|seaks|Mon Nov 16 08:55:02 2026 +0800|Update ghfu.po
-b7641ec|seaks|Mon Nov 16 08:54:24 2026 +0800|Update GitHub repository in defaults script
+1ceccb9|Action Bot|Wed Nov 18 09:02:13 2026 +0800|Update ghfu
+e344b5c|Action Bot|Wed Nov 18 09:01:37 2026 +0800|Remove '.bin' from valid_extensions option
+17e2dc8|Action Bot|Wed Nov 18 09:00:33 2026 +0800|Update ghfu.po
 </details>
