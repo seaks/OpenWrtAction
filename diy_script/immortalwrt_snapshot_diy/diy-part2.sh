@@ -165,7 +165,6 @@ chmod +x files/etc/uci-defaults/99-custom-ssh-config
 # ==============================================
 # GHFU 插件 token 注入：自动查找 ghfu.lua，不写死路径
 # ==============================================
-# 在整个源码树搜索 ghfu.lua controller 文件
 GHFU_FILE=$(find . -name "ghfu.lua" -path "*/controller/ghfu.lua" 2>/dev/null | head -n1)
 
 if [ -n "${GHFU_FILE}" ] && [ -f "${GHFU_FILE}" ]; then
@@ -180,5 +179,3 @@ fi
 
 echo "DIY2 is complete!"
 
-
-echo "DIY2 is complate!"
