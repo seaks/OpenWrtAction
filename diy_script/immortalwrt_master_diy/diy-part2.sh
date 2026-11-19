@@ -146,15 +146,15 @@ chmod +x files/etc/uci-defaults/99-custom-ssh-config
 # ==============================================
 # GHFU 插件 token 注入：perl安全替换
 # ==============================================
-GHFU_FILE=$(find . -path "*/luci-app-ghfu/*.lua" -exec grep -l '__GHFU_TOKEN__' {} + 2>/dev/null | head -n1)
+GHFU_FILE=$(find . -path "*/luci-app-ghfu/*.lua" -exec grep -l '__GHFU_GITHUB_TOKEN__' {} + 2>/dev/null | head -n1)
 
 if [ -n "$GHFU_FILE" ] && [ -n "${GHFU_GITHUB_TOKEN:-}" ]; then
     echo ">>> 找到ghfu模板文件：$GHFU_FILE"
     echo ">>> 注入GHFU_GITHUB_TOKEN"
-    perl -pi -e 's|__GHFU_TOKEN__|$ENV{GHFU_GITHUB_TOKEN}|g' "$GHFU_FILE"
+    perl -pi -e 's|__GHFU_GITHUB_TOKEN__|$ENV{GHFU_GITHUB_TOKEN}|g' "$GHFU_FILE"
 else
     if [ -z "$GHFU_FILE" ]; then
-        echo "⚠️  未找到包含 __GHFU_TOKEN__ 的ghfu lua模板，跳过注入"
+        echo "⚠️  未找到包含__GHFU_GITHUB_TOKEN__的ghfu lua模板，跳过注入"
     else
         echo ">>> 环境变量 GHFU_GITHUB_TOKEN 为空，不注入"
     fi
