@@ -162,5 +162,25 @@ chmod +x files/etc/uci-defaults/99-custom-ssh-config
 # --- End Modify SSH Configuration ---
 #------------------------------------------------end 修改脚本-------------------------------------------------------
 
+# ==============================================
+# GHFU 插件 token & 代理地址注入（编译时替换占位符）
+# ==============================================
+GHFU_FILE="feeds/luci-app-ghfu/luci-app-ghfu/controller/ghfu.lua"
+
+if [ -f "${GHFU_FILE}" ]; then
+    # 替换 GitHub Token
+    if [ -n "${GHFU_GITHUB_TOKEN}" ]; then
+        echo ">>> 注入 GHFU_GITHUB_TOKEN"
+        sed -i "s|__GHFU_GITHUB_TOKEN__|${GHFU_GITHUB_TOKEN}|g" "${GHFU_FILE}"
+    fi
+
+    # 替换 GH_PROXY 地址
+    if [ -n "${GHFU_PROXY}" ]; then
+        echo ">>> 注入 GHFU_PROXY"
+        sed -i "s|__GHFU_PROXY__|${GHFU_PROXY}|g" "${GHFU_FILE}"
+    fi
+else
+    echo "!!! 警告：未找到 ghfu.lua 文件，跳过注入：${GHFU_FILE}"
+fi
 
 echo "DIY2 is complate!"
