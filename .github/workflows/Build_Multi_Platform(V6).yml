@@ -532,16 +532,6 @@ jobs:
 
           df -hT
 
-      - name: Increase Swap Space
-        if: steps.matrix_status.outputs.status != 'success'
-        run: |
-          # 4G swap 防 OOM；fallocate 不可用时用 dd 兜底
-          sudo fallocate -l 4G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
-
       - name: SSH connection to Actions
         uses: owenthereal/action-upterm@v2
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
