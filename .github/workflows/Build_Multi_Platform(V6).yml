@@ -126,14 +126,11 @@ jobs:
         run: |
           git checkout -b temp-${{ matrix.source_code_platform }}
 
-
-
       - name: Make Defconfig Custom Configuration
         run: |
           chmod +x compile_script/step01_make_defconfig.sh
           cd openwrt
           $GITHUB_WORKSPACE/compile_script/step01_make_defconfig.sh "${{ matrix.source_code_platform }}" "${{ matrix.value.CONFIGS }}"
-
 
       - name: Merge and push changes with "theirs" strategy
         run: |
@@ -534,11 +531,22 @@ jobs:
           fi
 
           df -hT
-     
+
+      - name: Increase Swap Space
+        if: steps.matrix_status.outputs.status != 'success'
+        run: |
+          # 4G swap 防 OOM；fallocate 不可用时用 dd 兜底
+          sudo fallocate -l 4G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: SSH connection to Actions
         uses: owenthereal/action-upterm@v2
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
+      # >>> 改动 2：路径修正为带 lang/ 的真实路径，并加 [ -d ] 跳过不存在目标 <<<
       - name: Compile Base (Tools, Toolchain, Kernel, LongTime Packages)
         id: compile_base
         if: steps.matrix_status.outputs.status != 'success'
@@ -551,18 +559,21 @@ jobs:
           LONG_TIME_TARGETS_DOWNLOAD=(
               "tools/download"
               "toolchain/download"
-              # "package/feeds/packages/golang/host/download"
-              # "package/feeds/packages/rust/host/download"
-              # "package/feeds/packages/ruby/host/download"
-              # "package/libs/gettext-full/host/download"
+              "package/feeds/packages/lang/golang/host/download"
+              "package/feeds/packages/lang/rust/host/download"
+              "package/feeds/packages/lang/ruby/host/download"
+              "package/libs/gettext-full/host/download"
           )
           for target in "${LONG_TIME_TARGETS_DOWNLOAD[@]}"; do
+              if [ ! -d "$target" ]; then
+                  echo "---- skip (not found): $target ----"
+                  continue
+              fi
               echo "==== 正在执行 download $target ===="
-              make $target -j1 || exit 1
+              make "$target" -j1 || echo "⚠️ download failed: $target (继续)"
               sleep 5
               echo "------------------------"
           done
-
 
           # echo "==== 3. 编译 Linux 内核 ===="
           # time make target/compile -j$(nproc) || exit 1
@@ -571,20 +582,24 @@ jobs:
           LONG_TIME_TARGETS_COMPILE=(
               "tools/compile"
               "toolchain/compile"
-              # "package/feeds/packages/golang/host/compile"
-              # "package/feeds/packages/rust/host/compile"
-              # "package/feeds/packages/ruby/host/compile"
-              # "package/libs/gettext-full/host/compile"
+              "package/feeds/packages/lang/golang/host/compile"
+              "package/feeds/packages/lang/rust/host/compile"
+              "package/feeds/packages/lang/ruby/host/compile"
+              "package/libs/gettext-full/host/compile"
           )
           for target in "${LONG_TIME_TARGETS_COMPILE[@]}"; do
+              if [ ! -d "$target" ]; then
+                  echo "---- skip (not found): $target ----"
+                  continue
+              fi
               echo "==== 正在执行 compile $target ===="
-              # >>> 改动 3：fromJSON 去掉，改为字符串比较 <<<
+              # run_attempt == 2 时单线程 verbose，便于定位失败
               if [[ "${{ github.run_attempt }}" == "2" ]]; then
-                  time make $target -j1 V=s || exit 1
+                  time make "$target" -j1 V=s || exit 1
                   sleep 5
                   echo "------------------------"
               else
-                  time make $target -j$(nproc) || exit 1
+                  time make "$target" -j$(nproc) || exit 1
                   sleep 5
                   echo "------------------------"
               fi
@@ -616,8 +631,6 @@ jobs:
           find openwrt/build_dir openwrt/staging_dir -type f -newer /workdir/base_compilation_marker -path "*/stamp/*" 2>/dev/null | \
                           grep -E -v "$IGNORE_PATTERN"
 
-          
-          
           # （防止新下载的 tarball 比缓存 stamp 更新导致重编译）
           # OpenWrt stamp 依赖链：.installed→.built→.configured→.preparedXXX→dl/source.tar.gz
           # make download 每次都会重新下载 tarball，mtime = 现在，而缓存 stamp 时间是过去，
@@ -689,7 +702,7 @@ jobs:
           cd $GITHUB_WORKSPACE/openwrt
           timeout 25m make download -j8
 
-      # >>> 改动 4：Compile Packages and Firmware —— 第三次改 -j1，去掉 fromJSON <<<
+      # >>> 改动 4：Compile Packages and Firmware —— 第三次改 -j1 <<<
       - name: Compile Packages and Firmware
         id: compile
         if: steps.matrix_status.outputs.status != 'success' && !cancelled()
@@ -716,56 +729,88 @@ jobs:
               exit $MAKE_EXIT_CODE
           fi
 
+      # >>> 核心改动：Organize Files —— 用 matrix.platform (Nightly/Release) 给固件加前缀，
+      #     并去掉 matrix_status 判断，避免被跳过导致固件无前缀 <<<
       - name: Organize Files
         id: organize
-        if: steps.compile.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true' && steps.matrix_status.outputs.status != 'success' && !cancelled() 
+        if: steps.compile.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled() 
         run: |
-          cd $GITHUB_WORKSPACE/openwrt/bin/targets/*/*
-          mkdir -p feeds_packages
-          firmware_path=$PWD
-          cd $GITHUB_WORKSPACE/openwrt/bin/packages/*/
-          mv * $firmware_path/feeds_packages
-          cd $firmware_path
+          set -e
 
-          # >>> 删除不需要的 rootfs 和 kernel 独立文件 <<<
+          echo "==== DEBUG: platform=[${{ matrix.platform }}] ===="
+          echo "==== DEBUG: source_code_platform=[${{ matrix.source_code_platform }}] ===="
+          echo "==== DEBUG: matrix_status=[${{ steps.matrix_status.outputs.status }}] ===="
+
+          cd "$GITHUB_WORKSPACE/openwrt/bin/targets/"*/*
+          firmware_path="$PWD"
+          echo "==== DEBUG: firmware_path=$firmware_path ===="
+          pwd
+          echo "==== 原始文件列表 ===="
+          ls -la
+
+          mkdir -p feeds_packages
+          cp -r "$GITHUB_WORKSPACE/openwrt/bin/packages/"*/* "$firmware_path/feeds_packages/" 2>/dev/null || true
+          cd "$firmware_path"
+
+          # 删除不需要的 rootfs 和 kernel 独立文件
           rm -f *rootfs*.img.gz
           rm -f *kernel*.bin
 
-          zip -r buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip */
-          find . -maxdepth 1 -type f ! -name '*-*-*' ! -name '*.zip' -exec zip buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip {} +
-          find . -mindepth 1 ! \( -name '*-*-*' -o -name '*.zip' \) -exec rm -rf {} +
+          PREFIX="${{ matrix.platform }}"
 
+          # 1) 给固件镜像加前缀（Nightly_ / Release_）
+          for f in immortalwrt-* openwrt-* lede-*; do
+            [ -e "$f" ] || continue
+            [ -f "$f" ] || continue
+            case "$f" in
+              "${PREFIX}_"*) echo "skip (already prefixed): $f" ;;
+              *) mv -v "$f" "${PREFIX}_$f" ;;
+            esac
+          done
+
+          # 2) 给校验/信息文件加前缀，避免同 Release 同名覆盖
+          for f in sha256sums version.buildinfo config.buildinfo feeds.buildinfo *.manifest; do
+            [ -e "$f" ] || continue
+            [ -f "$f" ] || continue
+            case "$f" in
+              "${PREFIX}_"*) ;;
+              *) mv -v "$f" "${PREFIX}_$f" ;;
+            esac
+          done
+
+          # 3) lede 源额外把 openwrt- 改成 lede-（在前缀之后执行，避免双前缀）
           if [[ "${{ matrix.source_code_platform }}" == "lede" ]]; then
-              for file in openwrt-*; do
-                  if [[ -f "$file" ]]; then
-                      mv "$file" "${file/openwrt-/lede-}"
-                  fi
-              done
+            for file in openwrt-*; do
+              [ -f "$file" ] || continue
+              mv -v "$file" "${file/openwrt-/lede-}"
+            done
           fi
 
-          echo "FIRMWARE=$firmware_path" >> $GITHUB_OUTPUT
+          # 4) 打包 buildinfo zip（命名带 platform 区分）
+          zip -r "buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip" */ || true
+          find . -maxdepth 1 -type f ! -name '*-*-*' ! -name '*.zip' -exec zip "buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip" {} +
+          find . -mindepth 1 ! \( -name '*-*-*' -o -name '*.zip' \) -exec rm -rf {} +
 
-      # - name: Download Tags (For Release Body)
-      #   if: steps.organize.outcome == 'success' && steps.matrix_status.outputs.status != 'success'
-      #   uses: actions/download-artifact@v8
-      #   with:
-      #     name: release_tag
-      #     path: release_tag_download
+          echo "==== 重命名后文件列表 ===="
+          ls -la
 
+          echo "FIRMWARE=$firmware_path" >> "$GITHUB_OUTPUT"
+
+      # >>> 改动 5：Upload Release —— 同样去掉 matrix_status 判断 <<<
       - name: Upload Firmware To Release Directly
-        if: steps.organize.outcome == 'success' && steps.matrix_status.outputs.status != 'success' && !cancelled()
+        if: steps.organize.outcome == 'success' && !cancelled()
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           tag_name: ${{ needs.job_init.outputs.output_release_tag }}
-          # body_path: release_tag_download/release.txt
+          fail_on_unmatched_files: true
           files: |
             ${{ steps.organize.outputs.FIRMWARE }}/*
 
       - name: Upload Firmware Directory To Artifact (Backup)
         uses: actions/upload-artifact@v7
-        if: steps.organize.outcome == 'success' && env.UPLOAD_ARTIFACT == 'true' && steps.matrix_status.outputs.status != 'success' && !cancelled()
+        if: steps.organize.outcome == 'success' && env.UPLOAD_ARTIFACT == 'true' && !cancelled()
         with:
           name: ${{ matrix.source_code_platform }}_${{ matrix.platform }}_firmware
           path: ${{ steps.organize.outputs.FIRMWARE }}
@@ -773,7 +818,7 @@ jobs:
 
       - name: Upload Bin Directory To Artifact (Backup)
         uses: actions/upload-artifact@v7
-        if: steps.compile.outcome == 'success' && env.UPLOAD_BIN_DIR == 'true' && steps.matrix_status.outputs.status != 'success' && !cancelled()
+        if: steps.compile.outcome == 'success' && env.UPLOAD_BIN_DIR == 'true' && !cancelled()
         with:
           name: OpenWrt_bin_${{ matrix.source_code_platform }}_${{ matrix.platform }}
           path: openwrt/bin
