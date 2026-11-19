@@ -105,6 +105,8 @@ jobs:
           ./scripts/feeds update -a
 
       - name: Run DIY Part 2 Script
+        env:
+          GHFU_GITHUB_TOKEN: ${{ secrets.GHFU_GITHUB_TOKEN }}	  
         run: |
           chmod +x ${{ matrix.value.DIY_P2_SH }}
           cd openwrt
