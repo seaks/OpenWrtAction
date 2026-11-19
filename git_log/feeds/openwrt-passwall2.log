@@ -1,0 +1,10 @@
+<details> <summary> <b>openwrt-passwall2 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall2/compare/a32c046760c5fcbb018607824341ed42f4d50ba6...cb6fc9f65599a4a5eb863916284aa82ac6fa55c9)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+cb6fc9f|A-BO|Thu Nov 19 23:38:56 2026 +0800|luci: resolve XHTTP download addresses with node-specific DNS
+8b24c84|A-BO|Thu Nov 19 23:23:52 2026 +0800|luci: support per-node DNS policies in Clash subscriptions
+</details>
