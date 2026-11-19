@@ -151,8 +151,6 @@ jobs:
               git fetch origin ${{ github.ref_name }}
               git reset --hard origin/${{ github.ref_name }}
               
-              # 合并当前的临时分支
-              # git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs --no-edit
               git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs -m "[CI] Merge: temp-${{ matrix.source_code_platform }}"
               
               if git push origin ${{ github.ref_name }}; then
