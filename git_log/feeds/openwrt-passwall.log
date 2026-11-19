@@ -1,0 +1,10 @@
+<details> <summary> <b>openwrt-passwall 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/4cca0dc9985d176733fe50c352c4163675af01fd...f8001b9084b8cd55b415af05f16b1d4628caaef2)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+f8001b90|A-BO|Wed Nov 18 22:31:06 2026 +0800|luci: add WireGuard and MASQUE support to Clash subscription conversion
+190d5d4a|A-BO|Wed Nov 18 22:06:26 2026 +0800|luci: Add MASQUE URI import/export
+</details>
