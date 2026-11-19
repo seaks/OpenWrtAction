@@ -1,9 +1,0 @@
-<details> <summary> <b>video 更新日志 :rocket: </b> </summary>
-
-#### [:mega: 更新日志. ](https://github.com/openwrt/video/compare/7d3dcdebda95e50604cf068ed9b8fef29c94069e...6a3b5fd6e963f41caa73ef4f691e156d467e2894)  
-:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
-
-SHA|Author|Date|Message
--|-|-|-
-6a3b5fd|Tito Brasolin|Wed Apr 15 13:44:55 2026 +0200|qt5base: fix dependencies and improve packaging resilience
-</details>
