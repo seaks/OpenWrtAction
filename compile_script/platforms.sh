@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source_code_platforms=(immortalwrt_master immortalwrt_snapshot)
+source_code_platforms=(immortalwrt_snapshot)
 
 immortalwrt_master_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt",
@@ -14,7 +14,7 @@ immortalwrt_master_value='{
 
 immortalwrt_snapshot_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
-  "REPO_BRANCH": "openwrt-25.12",
+  "REPO_BRANCH": "master",
   "CONFIGS": "config/immortalwrt_snapshot",
   "DIY_P1_SH": "diy_script/immortalwrt_snapshot_diy/diy-part1.sh",
   "DIY_P2_SH": "diy_script/immortalwrt_snapshot_diy/diy-part2.sh",
