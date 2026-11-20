@@ -16,122 +16,80 @@ else
     PATCHES_SRC_DIR="../OpenWrtAction"
 fi
 export TOPDIR="$PWD"
+
+# 加载 bandix 版本校验函数
+PARENT_DIR="$GITHUB_WORKSPACE"
+FEEDS_SCRIPT="$PARENT_DIR/custom_feeds_and_packages.sh"
+if [ -f "$FEEDS_SCRIPT" ]; then
+    source "$FEEDS_SCRIPT"
+    echo "✅ 已加载 custom_feeds_and_packages.sh，导入 check_bandix_ver"
+else
+    echo "⚠️ 找不到 custom_feeds_and_packages.sh，跳过 bandix 版本校验"
+    check_bandix_ver() {
+        echo "skip bandix check"
+    }
+fi
+
 #------------------------------------------------------移植包------------------------------------------------------------
 rm -rf temp_repo
 # =================================================================
-# 极速拉取并注入 Feeds 树的函数
+# 快速拉取feeds内包函数
 # =================================================================
-inject_feed() {
+inject_feed_pkg() {
     local repo_url="$1"
-    local feed_dir="$2"
+    local feed_path="$2"
     shift 2
-    local paths=("$@")
-    echo "🚀 正在从 $repo_url 极速拉取至 $feed_dir ..."
-    # 稀疏检出，只拉需要的目录
-    git clone --filter=blob:none --sparse --depth=1 "$repo_url" temp_repo > /dev/null 2>&1
-    # 子 shell 隔离 cd，失败也不污染后续路径
-    (cd temp_repo && git sparse-checkout set "${paths[@]}" > /dev/null 2>&1)
-    # 提取上游最新的 Commit 时间戳（兜底用）
-    local fallback_time
-    fallback_time=$(cd temp_repo && git log -1 --format=%cd --date=unix 2>/dev/null || date +%s)
-    for p in "${paths[@]}"; do
-        if [ -d "temp_repo/$p" ]; then
-            local pkg_name dest_path feed_name symlink_path file_time
-            pkg_name=$(basename "$p")
-            dest_path="$feed_dir/$pkg_name"
-            # 1. 清理 OpenWrt 软链接，防止文件类型冲突
-            feed_name=$(echo "$feed_dir" | cut -d'/' -f2)
-            symlink_path="package/feeds/$feed_name/$pkg_name"
-            if [ -h "$symlink_path" ] || [ -d "$symlink_path" ]; then
-                rm -rf "$symlink_path"
-            fi
-            # 2. 清理并覆盖目标目录
-            rm -rf "$dest_path"
-            cp -r "temp_repo/$p" "$dest_path"
-            # 3. 提取真实时间戳，失败则用兜底时间，欺骗编译缓存
-            file_time=$(cd temp_repo && git log -1 --format=%cd --date=unix -- "$p" 2>/dev/null)
-            if [ -z "$file_time" ]; then
-                file_time=$fallback_time
-            fi
-            find "$dest_path" -exec touch -m -d @"$file_time" {} +
-            echo "✅ 已注入并伪装时间戳: $pkg_name"
-        else
-            echo "⚠️ 路径不存在，跳过: $p"
-        fi
+    local pkg_list=("$@")
+    echo "🚀 拉取包：${pkg_list[*]} 到 $feed_path"
+    git clone --filter=blob:none --sparse --depth 1 "$repo_url" temp_repo >/dev/null 2>&1
+    (cd temp_repo && git sparse-checkout set "${pkg_list[@]}")
+    for pkg in "${pkg_list[@]}"; do
+        rm -rf "$feed_path/$pkg"
+        cp -r "temp_repo/$pkg" "$feed_path/"
+        local pkg_target="$feed_path/$pkg"
+        find "$pkg_target" -type f -print0 | xargs -0 touch -m
+        echo "✅ 导入 $pkg -> $feed_path"
     done
     rm -rf temp_repo
 }
 # =================================================================
-# 执行注入任务
+# 执行导入
 # =================================================================
-# 1. 注入 rust
-inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
-    "lang/rust"
-# 2. 替换 golang 为 sbwml 27.x
-#    ⚠️ master 分支若编译报 golang-package.mk 相关错误，先注释掉这段试一次
-echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
+# 1. 导入rust
+inject_feed_pkg "https://github.com/openwrt/packages.git" "feeds/packages/lang" "rust"
+# 2. 替换golang为sbwml 27.x
+echo ">>> 替换 golang 为 sbwml/packages lang/golang 27.x"
 rm -rf feeds/packages/lang/golang
-git clone --depth 1 https://github.com/sbwml/packages_lang_golang -b 27.x feeds/packages/lang/golang
-echo "✅ golang 替换完成"
-# inject_feed "https://github.com/openwrt/luci.git" "feeds/luci/modules" \
-#     "modules/luci-mod-dashboard"
-echo "🎉 移植完毕"
-#----------------------------------------------------------end 移植包--------------------------------------------------------
-#-----------------------------------------------修改脚本------------------------------------------------------------
-# Modify default IP
+inject_feed_pkg "https://github.com/sbwml/packages.git" "feeds/packages/lang" "golang"
+echo "🎉 移植包处理完成"
+#------------------------------------------------------end移植包--------------------------------------------------------
+
+#-----------------------------------------------基础修改------------------------------------------------------------
+# 修改默认IP
 sed -i 's/192.168.1.1/192.168.101.1/g' package/base-files/files/bin/config_generate
-# inject download package（目录不存在或为空都不中断）
+# 复制dl缓存
 mkdir -p dl
 if [ -d "$PATCHES_SRC_DIR/library" ]; then
-    cp -r "$PATCHES_SRC_DIR/library/." ./dl/ 2>/dev/null \
-        && echo "✅ 已复制 library -> dl/" \
-        || echo "library 为空，跳过"
-else
-    echo "未找到 library 目录，跳过"
+    cp -r "$PATCHES_SRC_DIR/library/." dl/ 2>/dev/null && echo "✅ library缓存导入dl" || echo "library为空，跳过"
 fi
-# --- Modify SSH Configuration (Dropbear -> 2222, OpenSSH -> 22) ---
-mkdir -p files/etc/uci-defaults
-cat << 'EOF' > files/etc/uci-defaults/99-custom-ssh-config
-#!/bin/sh
-# --- 1. 停止服务 ---
-/etc/init.d/dropbear stop
-/etc/init.d/sshd stop 2>/dev/null
-# --- 2. 配置 Dropbear (UCI) ---
-uci set dropbear.@dropbear[0].Port='2222'
-uci commit dropbear
-# --- 3. 配置 OpenSSH (sshd_config) ---
-SSHD_CONFIG="/etc/ssh/sshd_config"
-if [ -f "$SSHD_CONFIG" ]; then
-    sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' "$SSHD_CONFIG"
-    sed -i 's/^#*Port.*/Port 22/' "$SSHD_CONFIG"
-fi
-# --- 4. 按顺序启动，避免端口抢占 ---
-/etc/init.d/dropbear start
-/etc/init.d/sshd enable
-/etc/init.d/sshd start
-exit 0
-EOF
-chmod +x files/etc/uci-defaults/99-custom-ssh-config
-# --- End Modify SSH Configuration ---
+# 配置ssh
+sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' package/network/services/dropbear/files/dropbear.config
+#-----------------------------------------------end基础修改----------------------------------------------------------
+
 # ==============================================
-# GHFU 插件 token 注入：perl安全替换
+# GHFU token注入
 # ==============================================
-GHFU_FILE=$(find . -path "*/luci-app-ghfu/*.lua" -exec grep -l '__GHFU_GITHUB_TOKEN__' {} + 2>/dev/null | head -n1)
+GHFU_FILE=$(find . -path "*/luci-app-ghfu/*ghfu.lua" -type f | head -n1)
 if [ -n "$GHFU_FILE" ] && [ -n "${GHFU_GITHUB_TOKEN:-}" ]; then
-    echo ">>> 找到ghfu模板文件：$GHFU_FILE"
-    echo ">>> 注入GHFU_GITHUB_TOKEN"
-    perl -pi -e 's|__GHFU_GITHUB_TOKEN__|$ENV{GHFU_GITHUB_TOKEN}|g' "$GHFU_FILE"
+    echo "✅ 找到ghfu模板：$GHFU_FILE"
+    perl -pi -e "s|__GHFU_GITHUB_TOKEN__|$GHFU_GITHUB_TOKEN|g" "$GHFU_FILE"
+    echo "✅ GHFU_TOKEN 注入完成"
 else
-    if [ -z "$GHFU_FILE" ]; then
-        echo "⚠️  未找到包含__GHFU_GITHUB_TOKEN__的ghfu lua模板，跳过注入"
-    else
-        echo ">>> 环境变量 GHFU_GITHUB_TOKEN 为空，不注入"
-    fi
+    echo "⚠️ 未找到ghfu.lua或者GHFU_GITHUB_TOKEN为空，跳过注入"
 fi
 
-# bandix 版本校验（feeds install‑a完成后执行，版本不一致CI直接失败）
-echo "===== 执行 bandix 前后端版本校验 ====="
+# bandix版本校验
+echo "===== 执行 bandix 版本校验 ====="
 check_bandix_ver
 
-echo "DIY2 is complete!"
-#------------------------------------------------end 修改脚本-------------------------------------------------------
+echo "✅ diy-part2 finished"
