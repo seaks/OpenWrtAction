@@ -3,8 +3,8 @@
 source_code_platforms=(immortalwrt_master immortalwrt_snapshot)
 
 immortalwrt_master_value='{
-  "REPO_URL": "https://github.com/immortalwrt/immortalwrt.git",
-  "REPO_BRANCH": "master",
+  "REPO_URL": "https://github.com/openwrt/openwrt.git",
+  "REPO_BRANCH": "main",
   "CONFIGS": "config/immortalwrt_master",
   "DIY_P1_SH": "diy_script/immortalwrt_master_diy/diy-part1.sh",
   "DIY_P2_SH": "diy_script/immortalwrt_master_diy/diy-part2.sh",
