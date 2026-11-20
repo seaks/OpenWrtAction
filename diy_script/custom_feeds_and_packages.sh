@@ -4,19 +4,15 @@
 # 原则：能走 feeds 的一律走 feeds；需要覆盖官方同名的才 clone 到 package/
 # 适用：ImmortalWrt 25.12 / master、OpenWrt CI & 本地编译
 #
-
 set -euo pipefail
-
 # ========== 配置区，按需改 ==========
 TOPDIR="${TOPDIR:-$PWD}"
 FEEDS_CONF="$TOPDIR/feeds.conf.default"
 CUSTOM_PKG_PATH="$TOPDIR/package/custom_packages"
 MOSDNS_PATH="$TOPDIR/package/mosdns"
 FILES_DIR="$TOPDIR/files"
-
 SHALLOW_CLONE=1
 # ===================================
-
 # =================================================================
 # feeds 扩展列表
 # 格式：src-git <别名> <地址>;<分支>
@@ -33,12 +29,10 @@ gen_repos() {
         # "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
         # "src-git OpenClash https://github.com/vernesong/OpenClash.git;master"
         # "src-git helloworld https://github.com/fw876/helloworld.git;dev"
-
         # ---------------------------------------------------------------
         # 自建插件
         # ---------------------------------------------------------------
         "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
-
         # ---------------------------------------------------------------
         # 流量监控
         # ---------------------------------------------------------------
@@ -56,7 +50,6 @@ gen_repos() {
     fi
     printf '%s\n' "${base_repos[@]}"
 }
-
 # 追加 feeds 到 feeds.conf.default
 append_feeds() {
     echo "===== 追加自定义 feeds 到 $FEEDS_CONF ====="
@@ -72,7 +65,6 @@ append_feeds() {
     done < <(gen_repos)
     echo "===== feeds 追加完成 ====="
 }
-
 # feeds install 之后调用：校验 bandix 前后端版本对齐
 check_bandix_ver() {
     echo "===== 校验 bandix 前后端版本，期望 ${BANDIX_VER}.x ====="
@@ -87,35 +79,30 @@ check_bandix_ver() {
     ver_fe=$(grep -m1 '^PKG_VERSION:' "$fe_feeds" | awk '{print $3}')
     echo "backend: $ver_be"
     echo "frontend: $ver_fe"
-    if [[ "$ver_be" == "${BANDIX_VER}."* && "$ver_fe" == "${BANDIX_VER}."* ]]; then
-        echo "✅ bandix 版本对齐"
+    if [[ "$ver_be" == "$ver_fe" ]]; then
+        echo "✅ bandix 前后端版本匹配：$ver_be"
     else
-        echo "❌ bandix 版本不一致！后端 $ver_be / 前端 $ver_fe，预期 ${BANDIX_VER}.x" >&2
+        echo "❌ bandix 前后端版本不一致！后端 $ver_be / 前端 $ver_fe" >&2
         exit 1
     fi
 }
-
 # =================================================================
 # 自定义软件包
 # =================================================================
 clone_custom_packages() {
     local path="$CUSTOM_PKG_PATH"
-
     if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_WORKFLOW:-}" ]; then
         PATCHES_SRC_DIR="$GITHUB_WORKSPACE"
     else
         PATCHES_SRC_DIR="../OpenWrtAction"
     fi
-
     rm -rf "$path"
     mkdir -p "$path"
-
     # 克隆到 custom_packages 下
     clone_pkg() {
         local url="$1" dest="$2" branch="${3:-}"
         clone_pkg_abs "$url" "${path}/${dest}" "$branch"
     }
-
     # 克隆到任意绝对路径（mosdns 要放 package/ 顶层，不能直接复用上面那个）
     clone_pkg_abs() {
         local url="$1" dest="$2" branch="${3:-}"
@@ -126,7 +113,6 @@ clone_custom_packages() {
         git clone "${git_args[@]}" "$url" "$dest" \
             || { echo "!!! 克隆失败: $url" >&2; return 1; }
     }
-
     # ----------------------------------------------------------------
     # 清理可能残留的旧 mosdns
     #   ⚠️ v2ray-geodata 不要删：
@@ -137,7 +123,6 @@ clone_custom_packages() {
     echo ">>> 清理旧的 mosdns 目录"
     rm -rf "$TOPDIR/package/mosdns"
     rm -rf "$TOPDIR/feeds/packages/net/mosdns"
-
     # ----------------------------------------------------------------
     # mosdns v5（放 package/mosdns，与 README 的编译路径对齐）
     #   README: make package/mosdns/luci-app-mosdns/compile V=s
@@ -151,19 +136,16 @@ clone_custom_packages() {
     #     clone_pkg_abs "https://github.com/sbwml/v2ray-geodata.git" "$TOPDIR/package/v2ray-geodata"
     # ----------------------------------------------------------------
     clone_pkg_abs "https://github.com/sbwml/luci-app-mosdns.git" "$MOSDNS_PATH" "v5"
-
     # ----------------------------------------------------------------
     #内置主题
     # ----------------------------------------------------------------
     clone_pkg "https://github.com/seaks/luci-theme-argon.git" "luci-theme-argon"
-
     # ============================================================
     # 取消主题自设默认：注释掉行首空白后的 luci.main.mediaurlbase= 赋值行
     # 进程替换而非管道，避免子 shell 变量丢失
     # ============================================================
     local target="luci.main.mediaurlbase="
     echo ">>> 扫描并注释主题自设默认逻辑，关键词：$target"
-
     while IFS= read -r -d '' file; do
         if grep -qF "$target" "$file"; then
             echo "    命中文件: $file"
@@ -172,24 +154,20 @@ clone_custom_packages() {
     done < <(find "$path" "$MOSDNS_PATH" -type f \
                   \( -name "Makefile" -o -path "*/etc/uci-defaults/*" \) -print0 2>/dev/null)
     echo ">>> 主题自带默认设置已注释完成"
-
     # ============================================================
     # 默认主题：zz- 前缀确保在其他 uci-defaults 之后执行
     # ============================================================
     local uci_d_dir="${FILES_DIR}/etc/uci-defaults"
     mkdir -p "$uci_d_dir"
     local theme_script="$uci_d_dir/zz-set-default-theme"
-
     cat << 'EOF' > "$theme_script"
 #!/bin/sh
-
 # 设置默认主题为 Argon（LuCI 标准主题机制）
 # Argon README: "Select Argon under
 #   System → System → Language and Style → Design"
 uci set luci.themes.Argon=/luci-static/argon
 uci set luci.main.mediaurlbase=/luci-static/argon
 uci commit luci
-
 # 改用 Vantage 时，把上面三行整体替换成下面三行：
 # uci set luci.themes.Vantage=/luci-static/vantage
 # uci set luci.main.mediaurlbase=/luci-static/vantage
@@ -197,12 +175,10 @@ uci commit luci
 #
 # Vantage README: "A fresh install switches to the theme for you"
 # 它装完会自己切，这里的显式设置只是保险
-
 exit 0
 EOF
     chmod +x "$theme_script"
     echo ">>> 默认主题脚本已生成：$theme_script"
-
     # ============================================================
     # bandix：关闭流量卸载
     # README: "Important: Please disable hardware flow offloading
@@ -211,18 +187,14 @@ EOF
     # 只在首次开机执行一次（uci-defaults 机制）
     # ============================================================
     local offload_script="$uci_d_dir/zz-bandix-disable-offload"
-
     cat << 'EOF' > "$offload_script"
 #!/bin/sh
-
 # 没装 bandix 就什么都不做
 command -v bandix >/dev/null 2>&1 || exit 0
-
 # 关闭软件 / 硬件流量卸载
 uci set firewall.@defaults[0].flow_offloading='0'
 uci set firewall.@defaults[0].flow_offloading_hw='0'
 uci commit firewall
-
 # 关闭 Turbo ACC（ImmortalWrt 默认开启）
 if uci -q get turboacc.config >/dev/null 2>&1; then
     uci set turboacc.config.flow_offloading='0'
@@ -230,13 +202,11 @@ if uci -q get turboacc.config >/dev/null 2>&1; then
     uci commit turboacc
     /etc/init.d/turboacc restart 2>/dev/null
 fi
-
 exit 0
 EOF
     chmod +x "$offload_script"
     echo ">>> bandix 关闭卸载脚本已生成：$offload_script"
 }
-
 # ========== 入口 ==========
 main() {
     append_feeds
@@ -244,4 +214,5 @@ main() {
     echo -e "\n✅ custom feeds & packages 处理全部完成"
 }
 
-main "$@"
+# ⚠️ 关键注释：source加载模式禁止自动运行main，由 diy‑part1 手动调用业务函数
+# main "$@"
