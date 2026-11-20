@@ -7,6 +7,31 @@
 # https://github.com/seaks/OpenWrtAction
 # Description: Build OpenWrt using GitHub Actions
 #
+# ============================================================================
+# 流程总览
+#
+#   job_init                  读 platforms.sh，产出编译矩阵 + 源码矩阵
+#      ↓
+#   job_source_init           并行：clone → part1/2/3 → defconfig → 打包源码
+#      ↓                            同时把 config 变更推回仓库
+#   job_generate_release_tag  汇总各平台 git log，创建 Release Tag
+#      ↓
+#   job_compile_and_upload    并行：解包 → 恢复 GHCR 缓存 → 编译 → 上传 Release
+#      ↓
+#   job_organize_tags         整理 tag，更新 Release 正文
+#      ↓
+#   rerun-failed-jobs         失败且 attempt<3 → Retry_Failure_Jobs.yml
+#   final-execution-jobs      全部成功 → repository_dispatch 通知下游
+#
+# 缓存：build_dir / staging_dir / dl → zstd 压成 5GB 分块 → 每块一个 docker layer
+#       绕过 Artifact 10GB 上限；dl 时间戳回拨 2000 年，防 make 误判重编
+#
+# 缓存恢复原理（易误解，写清楚）：
+#   Checkpoint: tar | zstd | split  →  得到单个 zstd 流的 N 个连续片段
+#   每片一个 layer，Dockerfile 用 COPY layerN /  →  平铺到镜像根目录
+#   docker export 输出的是「平铺合并后的单个 tar 流」，不是 save 的分层 tar
+#   所以 cat 拼回的仍是同一个 zstd 流，tar -I zstd 可直接解（不需要 zstdcat）
+# ============================================================================
 
 name: Build_Multi_Platform(V6)
 
@@ -28,16 +53,22 @@ on:
 permissions:
   contents: write
   packages: write
-  actions: write # 允许脚本去触发重试工作流
+  actions: write
 
 env:
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_ARTIFACT: true
   UPLOAD_RELEASE: true
+  GIT_REF_NAME: ${{ github.head_ref || github.ref_name }}
+  MAX_PUSH_RETRIES: 10
 
 jobs:
-  job_init: 
+
+  # ==========================================================================
+  # 1. 初始化：读 platforms.sh
+  # ==========================================================================
+  job_init:
     runs-on: ubuntu-latest
     name: Init
     outputs:
@@ -48,18 +79,24 @@ jobs:
       - name: Generate Tag Name
         id: gen_release_tag
         run: |
+          set -e
           echo "release_tag=multi-platform_$(TZ='Asia/Shanghai' date +"%Y.%m.%d_%H.%M.%S")" >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ env.GIT_REF_NAME }}
 
       - name: Read Platforms From File
         id: read-platforms
         run: |
+          set -e
           bash compile_script/platforms.sh
-  
+
+
+  # ==========================================================================
+  # 2. 源码初始化（按源码平台并行）
+  # ==========================================================================
   job_source_init:
     needs: job_init
     runs-on: ubuntu-latest
@@ -68,31 +105,35 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.job_init.outputs.platforms_source) }}
+    env:
+      RELEASE_TAG: ${{ needs.job_init.outputs.output_release_tag }}
     steps:
       - name: Init System
         id: init
         run: |
+          set -e
           sudo mkdir -p /workdir
           sudo chown -R $USER:$GROUPS /workdir
           cd /workdir
-          sudo mkdir -p output
-          sudo chown -R $USER:$GROUPS /workdir/output
+          mkdir -p output                       # ln -sf 需要目标存在
           ln -sf /workdir/output $GITHUB_WORKSPACE/output
           df -hT
 
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ env.GIT_REF_NAME }}
 
       - name: Clone Source Code
         working-directory: /workdir
         run: |
-          git clone -b ${{matrix.value.REPO_BRANCH}} --single-branch ${{ matrix.value.REPO_URL }} openwrt
+          set -e
+          git clone -b ${{ matrix.value.REPO_BRANCH }} --single-branch ${{ matrix.value.REPO_URL }} openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
       - name: Run DIY Part 1 Script
         run: |
+          set -e
           chmod +x ${{ matrix.value.DIY_P1_SH }}
           cd openwrt
           $GITHUB_WORKSPACE/${{ matrix.value.DIY_P1_SH }}
@@ -101,6 +142,7 @@ jobs:
 
       - name: Update Feeds
         run: |
+          set -e
           cd openwrt
           ./scripts/feeds update -a
 
@@ -108,16 +150,18 @@ jobs:
         env:
           GHFU_GITHUB_TOKEN: ${{ secrets.GHFU_GITHUB_TOKEN }}
         run: |
+          set -e
           chmod +x ${{ matrix.value.DIY_P2_SH }}
           cd openwrt
           $GITHUB_WORKSPACE/${{ matrix.value.DIY_P2_SH }}
 
       - name: Install Feeds
         run: |
+          set -e
           cd openwrt
           ./scripts/feeds update -i
           ./scripts/feeds install -a
-      
+
       - name: Run DIY Part 3 scripts
         run: |
           chmod +x $GITHUB_WORKSPACE/${{ matrix.value.DIY_P3_SH }} || true
@@ -126,66 +170,75 @@ jobs:
 
       - name: Create temporary branch
         run: |
+          set -e
           git checkout -b temp-${{ matrix.source_code_platform }}
-
-
 
       - name: Make Defconfig Custom Configuration
         run: |
+          set -e
           chmod +x compile_script/step01_make_defconfig.sh
           cd openwrt
           $GITHUB_WORKSPACE/compile_script/step01_make_defconfig.sh "${{ matrix.source_code_platform }}" "${{ matrix.value.CONFIGS }}"
 
-
+      # ---------------------------------------------------------------
+      # 把 CI 改动推回仓库
+      #   矩阵并发 → 多 job 同时 push 同一分支必然撞车
+      #   策略：失败就重新 fetch + reset --hard origin 对齐基线再 merge 重试
+      #
+      #   ⚠️ 不要在失败分支里 git reset --hard HEAD~1：
+      #      push 失败可能是「已推成功但响应丢失」，盲目回退会削掉别人的提交。
+      #      循环顶部那三行已经把基线对齐到远端最新，HEAD~1 没有存在意义。
+      # ---------------------------------------------------------------
       - name: Merge and push changes with "theirs" strategy
         run: |
+          set -e
           git checkout temp-${{ matrix.source_code_platform }}
           git add .
 
-          if ! git diff --cached --quiet; then
-            git config user.name "seaks"
-            git config user.email "lei.seaks@gmail.com"
-            git commit -m "[CI] Configuration: update code for ${{ matrix.source_code_platform }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
 
-            MAX_RETRIES=10
-            RETRY_COUNT=0
-            
-            # 循环重试机制解决矩阵并发 Push 冲突
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              git checkout ${{ github.ref_name }}
-              git fetch origin ${{ github.ref_name }}
-              git reset --hard origin/${{ github.ref_name }}
-              
-              # 合并当前的临时分支
-              # git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs --no-edit
-              git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs -m "[CI] Merge: temp-${{ matrix.source_code_platform }}"
-              
-              if git push origin ${{ github.ref_name }}; then
-                echo "Push successful!"
-                break
-              else
-                echo "Push failed due to concurrent update. Retrying in a few seconds..."
-                git reset --hard HEAD~1
-                RETRY_COUNT=$((RETRY_COUNT+1))
-                sleep $((RANDOM % 5 + 3)) # 随机等待 3-7 秒错开并发
-              fi
-            done
-            
-            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-              echo "Failed to push after $MAX_RETRIES attempts."
-              exit 100
+          git config user.name  "seaks"
+          git config user.email "lei.seaks@gmail.com"
+          git commit -m "[CI] Configuration: update code for ${{ matrix.source_code_platform }}"
+
+          MAX_RETRIES=${{ env.MAX_PUSH_RETRIES }}
+          RETRY_COUNT=0
+          TARGET_BRANCH="${{ env.GIT_REF_NAME }}"
+          TEMP_BRANCH="temp-${{ matrix.source_code_platform }}"
+
+          while [ "$RETRY_COUNT" -lt "$MAX_RETRIES" ]; do
+            git checkout "$TARGET_BRANCH"
+            git fetch origin "$TARGET_BRANCH"
+            git reset --hard "origin/$TARGET_BRANCH"
+
+            git merge "$TEMP_BRANCH" --strategy-option theirs \
+                      -m "[CI] Merge: $TEMP_BRANCH"
+
+            if git push origin "$TARGET_BRANCH"; then
+              echo "Push successful!"
+              break
             fi
 
-            # 只删除本地临时分支
-            git branch -D temp-${{ matrix.source_code_platform }} || echo "Local temp branch not found"
-          else
-            echo "No changes to commit."
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Push failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying..."
+            sleep $((RANDOM % 5 + 3))       # 随机 3-7 秒错开并发
+          done
+
+          if [ "$RETRY_COUNT" -eq "$MAX_RETRIES" ]; then
+            echo "Failed to push after $MAX_RETRIES attempts."
+            exit 100
           fi
+
+          git branch -D "$TEMP_BRANCH" || echo "Local temp branch not found"
 
       - name: Generate Source Packages
         working-directory: /workdir
         id: generate_image
         run: |
+          set -e
           tar -czf output/output.tar.gz openwrt/
           echo "SOURCE_PATH=$PWD" >> $GITHUB_OUTPUT
 
@@ -201,12 +254,13 @@ jobs:
       - name: Generate Git Log
         id: git_log
         run: |
-          chmod +x compile_script/step03_generate_git_log.sh 
+          set -e
+          chmod +x compile_script/step03_generate_git_log.sh
           $GITHUB_WORKSPACE/compile_script/step03_generate_git_log.sh "${{ matrix.source_code_platform }}"
-          
+
       - name: Upload Git Log To Artifact
         uses: actions/upload-artifact@v7
-        if: steps.git_log.outputs.status == 'success'
+        if: steps.git_log.outcome == 'success'
         with:
           name: git_log_${{ matrix.source_code_platform }}
           path: git_log_${{ matrix.source_code_platform }}.txt
@@ -216,9 +270,10 @@ jobs:
       - name: Generate Release Tag
         id: tag
         run: |
+          set -e
           chmod +x compile_script/step02_generate_release_tag.sh
-          $GITHUB_WORKSPACE/compile_script/step02_generate_release_tag.sh "${{ needs.job_init.outputs.output_release_tag }}" "${{ matrix.source_code_platform }}" "${{ matrix.value.CONFIGS }}"
-      
+          $GITHUB_WORKSPACE/compile_script/step02_generate_release_tag.sh "${{ env.RELEASE_TAG }}" "${{ matrix.source_code_platform }}" "${{ matrix.value.CONFIGS }}"
+
       - name: Upload Release Tag To Artifact
         uses: actions/upload-artifact@v7
         with:
@@ -227,30 +282,37 @@ jobs:
           overwrite: true
           retention-days: 5
 
-  job_generate_release_tag: 
+
+  # ==========================================================================
+  # 3. 汇总 git log，创建 Release Tag
+  # ==========================================================================
+  job_generate_release_tag:
     needs: [job_init, job_source_init]
     runs-on: ubuntu-latest
     name: Generate-Release-Tag-And-Git-Log
+    env:
+      RELEASE_TAG: ${{ needs.job_init.outputs.output_release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ env.GIT_REF_NAME }}
           fetch-depth: 0
 
       - name: Create temporary branch
         run: |
+          set -e
           git checkout -b temp-tag-gitlog
 
       - name: Download Git Log From Artifacts
-        id : download_gitlog
+        id: download_gitlog
         uses: actions/download-artifact@v8
         with:
           pattern: git_log_*
           merge-multiple: true
 
       - name: Download Release Tag From Artifacts
-        id : download_releasetag
+        id: download_releasetag
         uses: actions/download-artifact@v8
         with:
           pattern: release_*
@@ -259,8 +321,9 @@ jobs:
       - name: Generate Release Tag
         id: tag
         run: |
+          set -e
           chmod +x compile_script/step06_update_git_log.sh
-          $GITHUB_WORKSPACE/compile_script/step06_update_git_log.sh "${{ needs.job_init.outputs.output_release_tag }}"
+          $GITHUB_WORKSPACE/compile_script/step06_update_git_log.sh "${{ env.RELEASE_TAG }}"
 
       - name: Upload Tags To Artifact
         uses: actions/upload-artifact@v7
@@ -270,89 +333,68 @@ jobs:
           retention-days: 5
           overwrite: true
 
-      # >>> 改动 1：生成公钥 .pub 文件 <<<
-      - name: Configure Git & SSH signing
-        env:
-          TAG_SIGN_KEY: ${{ secrets.TAG_SIGN_KEY }}
-        run: |
-          git config user.name "${{ secrets.GIT_USER_NAME }}"
-          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
-
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$TAG_SIGN_KEY" > ~/.ssh/ci_sign_key
-          chmod 600 ~/.ssh/ci_sign_key
-
-          # 从私钥推导公钥，确保 .pub 文件实际存在
-          ssh-keygen -y -f ~/.ssh/ci_sign_key > ~/.ssh/ci_sign_key.pub
-
-          git config gpg.format ssh
-          git config user.signingkey ~/.ssh/ci_sign_key.pub
-          git config tag.gpgsign true
-          git config tag.annotate true
-
-          echo "$(git config user.email) namespaces=\"git\" $(cat ~/.ssh/ci_sign_key.pub)" > ~/.ssh/allowed_signers
-          git config gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
-
-      - name: Create and push signed annotated tag
-        run: |
-          TAG="${{ needs.job_init.outputs.output_release_tag }}"
-          git fetch origin
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "refs/tags/$TAG"
-
       - name: Create Release Tag
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ needs.job_init.outputs.output_release_tag }}
+          tag_name: ${{ env.RELEASE_TAG }}
           body_path: release.txt
           make_latest: true
 
+      # 同 job_source_init：失败只重试，不 reset --hard HEAD~1
       - name: Merge and push changes with "theirs" strategy
         run: |
+          set -e
           git checkout temp-tag-gitlog
           rm -rf release.txt
           git add .
 
-          if ! git diff --cached --quiet; then
-            git config user.name "seaks"
-            git config user.email "lei.seaks@gmail.com"
-            git commit -m "[CI] Git Log: update code"
-            
-            MAX_RETRIES=10
-            RETRY_COUNT=0
-            
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              git checkout ${{ github.ref_name }}
-              git fetch origin ${{ github.ref_name }}
-              git reset --hard origin/${{ github.ref_name }}
-              
-              git merge temp-tag-gitlog --strategy-option theirs --no-edit
-              
-              if git push origin ${{ github.ref_name }}; then
-                echo "Push successful!"
-                break
-              else
-                echo "Push failed. Retrying..."
-                git reset --hard HEAD~1
-                RETRY_COUNT=$((RETRY_COUNT+1))
-                sleep $((RANDOM % 5 + 3))
-              fi
-            done
-            
-            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-              echo "Failed to push git log after $MAX_RETRIES attempts."
-              exit 100
-            fi
-            
-            # 只删除本地临时分支
-            git branch -D temp-tag-gitlog || echo "Local temp-tag-gitlog not found"
-          else
+          if git diff --cached --quiet; then
             echo "No changes to commit."
+            exit 0
           fi
 
+          git config user.name  "seaks"
+          git config user.email "lei.seaks@gmail.com"
+          git commit -m "[CI] Git Log: update code"
+
+          MAX_RETRIES=${{ env.MAX_PUSH_RETRIES }}
+          RETRY_COUNT=0
+          TARGET_BRANCH="${{ env.GIT_REF_NAME }}"
+
+          while [ "$RETRY_COUNT" -lt "$MAX_RETRIES" ]; do
+            git checkout "$TARGET_BRANCH"
+            git fetch origin "$TARGET_BRANCH"
+            git reset --hard "origin/$TARGET_BRANCH"
+
+            git merge temp-tag-gitlog --strategy-option theirs --no-edit
+
+            if git push origin "$TARGET_BRANCH"; then
+              echo "Push successful!"
+              break
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Push failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying..."
+            sleep $((RANDOM % 5 + 3))
+          done
+
+          if [ "$RETRY_COUNT" -eq "$MAX_RETRIES" ]; then
+            echo "Failed to push git log after $MAX_RETRIES attempts."
+            exit 100
+          fi
+
+          git branch -D temp-tag-gitlog || echo "Local temp-tag-gitlog not found"
+
+
+  # ==========================================================================
+  # 4. 编译与上传（源码平台 × 固件平台 并行）
+  #
+  #    matrix_status 是重试机制核心：本 job 若已在重试中成功过就直接跳过
+  #    下面每个 step 都带同一个 if —— 这是故意展开写的，不用 YAML 锚点：
+  #    env 块里无法引用 steps 上下文
+  # ==========================================================================
   job_compile_and_upload:
     needs: [job_init, job_source_init, job_generate_release_tag]
     runs-on: ubuntu-latest
@@ -362,37 +404,42 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.job_init.outputs.platforms) }}
     name: Build-${{ matrix.source_code_platform }}-${{ matrix.platform }}
-
+    env:
+      RELEASE_TAG: ${{ needs.job_init.outputs.output_release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ env.GIT_REF_NAME }}
 
       - name: Matrix Status
         id: matrix_status
         run: |
-            chmod +x compile_script/matrix_job_status.sh
-            $GITHUB_WORKSPACE/compile_script/matrix_job_status.sh "${{ github.token }}" "${{ github.repository }}" "${{ github.run_id }}" "${{ fromJSON(github.run_attempt) }}" "Build-${{ matrix.source_code_platform }}-${{ matrix.platform }}"
+          set -e
+          chmod +x compile_script/matrix_job_status.sh
+          $GITHUB_WORKSPACE/compile_script/matrix_job_status.sh "${{ github.token }}" "${{ github.repository }}" "${{ github.run_id }}" "${{ fromJSON(github.run_attempt) }}" "Build-${{ matrix.source_code_platform }}-${{ matrix.platform }}"
 
       - name: Server Info
         if: steps.matrix_status.outputs.status != 'success'
         run: |
-            echo "---------------------CPU Info--------------------"
-            lscpu
-            echo "---------------------RAM Info--------------------"
-            free -h
+          set -e
+          echo "---------------------CPU Info--------------------"
+          lscpu
+          echo "---------------------RAM Info--------------------"
+          free -h
 
       - name: Initialization Environment
         if: steps.matrix_status.outputs.status != 'success'
         run: |
+          set -e
           sudo mkdir -p /workdir
           sudo chown -R $USER:$GROUPS /workdir
           df -hT
-  
+
       - name: Free Disk Space
         if: steps.matrix_status.outputs.status != 'success'
         run: |
+          set -e
           echo "==== Disk space before cleanup ===="
           df -hT
           echo "==== Clean disk space begin ===="
@@ -404,40 +451,55 @@ jobs:
           sudo rm -rf /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
           echo "==== Clean disk space complete ===="
-          echo "==== Disk space after cleanup ===="
           df -hT
-          
+
+      # ---------------------------------------------------------------
+      # 安装编译依赖
+      #   ⚠️ 不要写成 apt-get install $(curl ...)：
+      #     命令替换里的 curl 失败不触发 set -e，退出码被丢掉，
+      #     apt-get 收到空参数 → 要么报错、要么「什么都没装还继续跑」，
+      #     后面报一堆 command not found，根本看不出根因在依赖没装
+      #   -f 让 curl 对 404 返回非 0，中间变量接住后再判空
+      # ---------------------------------------------------------------
       - name: Install Packages
         if: steps.matrix_status.outputs.status != 'success'
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          set -e
+          DEP_LIST=$(curl -fsSL "https://github.com/seaks/OpenWrtAction/raw/main/diy_script/${{ matrix.source_code_platform }}_dependence")
+          if [ -z "$DEP_LIST" ]; then
+            echo "!!! 依赖清单为空（平台：${{ matrix.source_code_platform }}），abort" >&2
+            exit 1
+          fi
+          echo "---- 待装依赖 ----"
+          echo "$DEP_LIST"
           sudo -E apt-get -qq update
-          sudo -E apt-get -qq install $(curl -fsSL https://github.com/seaks/OpenWrtAction/raw/main/diy_script/${{ matrix.source_code_platform }}_dependence)
+          sudo -E apt-get -qq install $DEP_LIST
 
       - name: Initialization Directory
         working-directory: /workdir
         id: init_directory
         if: steps.matrix_status.outputs.status != 'success'
         run: |
-          sudo mkdir -p openwrt
-          sudo mkdir -p download
-          sudo chown -R $USER:$GROUPS /workdir/openwrt
-          sudo chown -R $USER:$GROUPS /workdir/download
-          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+          set -e
+          mkdir -p openwrt download
+          ln -sf /workdir/openwrt   $GITHUB_WORKSPACE/openwrt
           ln -sf /workdir/download $GITHUB_WORKSPACE/download
 
+      # Docker 数据目录迁到 /workdir：根分区仅 ~14GB，装不下缓存镜像
       - name: Relocate Docker to /workdir
         if: steps.matrix_status.outputs.status != 'success'
         run: |
+          set -e
           echo "==== 1. 停止 Docker 服务 ===="
           sudo systemctl stop docker
-          echo "==== 2. 迁移 Docker 数据目录到宽敞的 /workdir ===="
+          echo "==== 2. 迁移数据目录到 /workdir ===="
           sudo mkdir -p /workdir/docker
           echo '{"data-root": "/workdir/docker"}' | sudo tee /etc/docker/daemon.json
           echo "==== 3. 重启 Docker 服务 ===="
           sudo systemctl start docker
-          echo "==== 4. 验证迁移是否成功 ===="
+          echo "==== 4. 验证 ===="
           docker info | grep "Docker Root Dir"
 
       - name: Login to GitHub Container Registry
@@ -449,17 +511,18 @@ jobs:
           password: ${{ github.token }}
 
       - name: Download Source From Artifacts
-        id : download
+        id: download
         if: steps.matrix_status.outputs.status != 'success'
         uses: actions/download-artifact@v8
         with:
           name: Source_${{ matrix.source_code_platform }}
           path: download
-      
+
       - name: Extract Pristine Source
         if: steps.matrix_status.outputs.status != 'success'
         working-directory: /workdir
         run: |
+          set -e
           tar -xzf download/output.tar.gz
           rm -rf download/output.tar.gz
           sudo chown -R $USER:$GROUPS /workdir/openwrt
@@ -467,146 +530,174 @@ jobs:
       - name: Load Configuration
         if: steps.matrix_status.outputs.status != 'success'
         run: |
-          [ -e ${{ matrix.value.CONFIGS }}/${{ matrix.platform }}.config ] && cp -r ${{ matrix.value.CONFIGS }}/${{ matrix.platform }}.config openwrt/.config
+          set -e
+          [ -e "${{ matrix.value.CONFIGS }}/${{ matrix.platform }}.config" ] && \
+            cp -r "${{ matrix.value.CONFIGS }}/${{ matrix.platform }}.config" openwrt/.config
           cd openwrt
           make defconfig
-          
 
+      # ---------------------------------------------------------------
+      # 时间戳还原
+      #   artifact 打包会把 mtime 全冲成当下，make 靠 mtime 判断要不要重编
+      #   1) 用 git log 把每个文件 mtime 还原成最后提交时间
+      #   2) dl/ 一律回拨 2000-01-01：make download 会刷新 tarball mtime，
+      #      比 stamp 新就触发重编；回拨到远古即免疫
+      #      （PKG_HASH 真变了 stamp 名也变，照样正常重编）
+      # ---------------------------------------------------------------
       - name: Git Restore Mtime (True SSoT) And DL Restore Time
         if: steps.matrix_status.outputs.status != 'success'
         run: |
+          set -e
           cd /workdir/openwrt
           echo "==== 遍历所有 Git 仓库并精准还原真实提交时间 ===="
-          find . -name ".git" -type d | while read gitdir; do
+          find . -name ".git" -type d | while read -r gitdir; do
               repo_dir=$(dirname "$gitdir")
               echo "-> 正在处理 Git 仓库: $repo_dir"
-              cd "/workdir/openwrt/$repo_dir"
-              git log --format=%at --name-only | perl -ane '
-                if (/^(\d+)$/) { $t = $1; }
-                elsif (/^(\S+)$/) {
-                  $f = $1;
-                  if (-e $f && !-d $f && !$seen{$f}) {
-                    utime($t, $t, $f);
-                    $seen{$f} = 1;
-                  }
-                }
-              '
-              cd /workdir/openwrt
+              # 子 shell：cd 不污染外层循环
+              (
+                cd "/workdir/openwrt/$repo_dir" || exit 0
+                git log --format=%at --name-only | perl -ane '
+                  if (/^(\d+)$/) { $t = $1; }
+                  elsif (/^(\S+)$/) {
+                    $f = $1;
+                    if (-e $f && !-d $f && !$seen{$f}) {
+                      utime($t, $t, $f);
+                      $seen{$f} = 1;
+                    }
+                  }'
+              )
           done
 
-          find /workdir/openwrt/dl -type f | xargs -r touch -t 200001010000
+          find /workdir/openwrt/dl -type f -print0 2>/dev/null | \
+            xargs -0 -r touch -t 200001010000
           echo "✅ dl/ 时间戳逆转完成！"
 
+      # ---------------------------------------------------------------
+      # 从 GHCR 恢复整个编译缓存
+      #
+      #   Checkpoint 时 COPY layerN / 会把层内文件平铺到镜像根目录，
+      #   所以 export 出来的 tar 里分块直接位于 / 下，无需递归查找
+      #
+      #   split 切的是「tar | zstd」的单个压缩流，cat 拼回仍是同一个流，
+      #   因此 tar -I zstd 可直接解（不是 docker save 那种分层独立压缩）
+      #
+      #   pipefail：tar 解失败时不能继续 rm 掉分块，否则连重试的机会都没了
+      # ---------------------------------------------------------------
       - name: Restore Entire OpenWrt Cache from GHCR
         id: restore_cache
-        if: steps.matrix_status.outputs.status != 'success' && fromJSON(github.run_attempt) < 3  && github.event.inputs.force_rebuild != 'true'
+        if: steps.matrix_status.outputs.status != 'success' && fromJSON(github.run_attempt) < 3 && github.event.inputs.force_rebuild != 'true'
         run: |
-
+          set -eo pipefail
           df -hT
 
           REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           PLATFORM_NAME=$(echo "${{ matrix.source_code_platform }}-${{ matrix.platform }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/seaks/openwrt-base-cache-$PLATFORM_NAME:latest"
-          
-          if docker pull $IMAGE_NAME; then
-            echo "==== 发现缓存，开始极速提取 ===="
-            cd /workdir
-            docker create --name cache_container $IMAGE_NAME /bin/true
-            
-            # 导出整个容器的打包文件
-            docker export cache_container > cache_exported.tar
-            docker rm cache_container
-            docker rmi $IMAGE_NAME -f
-            
-            # 直接提取原名分块
-            tar -xf cache_exported.tar --wildcards "op_cache_raw_*" || true
-            
-            if ls op_cache_raw_* 1> /dev/null 2>&1; then
-               echo "==== 按顺序合并分块并还原到 OpenWrt ===="
-               # 直接 cat 合并，极其清爽
-               cat op_cache_raw_* | tar -I "zstd -T0" -xf - -C /workdir/openwrt/
-               
-               rm -f /workdir/cache_exported.tar /workdir/op_cache_raw_*
-               echo "✅ 缓存合并恢复完成！"
-            else
-               echo "⚠️ 未找到有效缓存分块！"
-            fi
-          else
+          IMAGE_NAME="ghcr.io/${REPO_OWNER}/openwrt-base-cache-${PLATFORM_NAME}:latest"
+
+          if ! docker pull "$IMAGE_NAME"; then
             echo "No cache found on GHCR. This will be a clean build."
+            df -hT
+            exit 0
+          fi
+
+          echo "==== 发现缓存，开始提取 ===="
+          cd /workdir
+
+          docker create --name cache_container "$IMAGE_NAME" /bin/true
+          docker export cache_container > cache_exported.tar
+          docker rm -f cache_container
+          docker rmi -f "$IMAGE_NAME"
+
+          # 分块平铺在镜像根目录，直接提取
+          tar -xf cache_exported.tar --wildcards "op_cache_raw_*"
+          rm -f cache_exported.tar
+
+          # 按版本号排序，保证分块顺序正确
+          mapfile -t PARTS < <(ls -1 op_cache_raw_* | sort -V)
+
+          if [ "${#PARTS[@]}" -eq 0 ]; then
+            echo "⚠️ 未找到有效缓存分块，转入 clean build"
+          else
+            echo "==== 合并 ${#PARTS[@]} 个分块并还原到源码树 ===="
+            cat "${PARTS[@]}" | tar -I "zstd -T0" -xf - -C /workdir/openwrt/
+            rm -f op_cache_raw_*
+            echo "✅ 缓存恢复完成！"
           fi
 
           df -hT
-     
+
       - name: SSH connection to Actions
         uses: owenthereal/action-upterm@v2
-        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
 
-      - name: Compile Base (Tools, Toolchain, Kernel, LongTime Packages)
+      # ---------------------------------------------------------------
+      # 阶段一：编译 Base（tools / toolchain）
+      #
+      #   ⚠️ download 必须 -j1：
+      #      tools/toolchain 的源站（kernel.org / gnu.org / GitHub）会限流，
+      #      并发拉取容易 429 导致整个 make 失败；这一步瓶颈是带宽不是 CPU，
+      #      串行省不了多少时间，但稳定性差别很大
+      #
+      #   第 3 次尝试开 V=s 输出详细日志
+      # ---------------------------------------------------------------
+      - name: Compile Base (Tools, Toolchain)
         id: compile_base
         if: steps.matrix_status.outputs.status != 'success'
         run: |
+          set -e
           cd openwrt
           touch /workdir/base_compilation_marker
-
-          echo "==== 开始download ===="
 
           LONG_TIME_TARGETS_DOWNLOAD=(
               "tools/download"
               "toolchain/download"
-              # "package/feeds/packages/golang/host/download"
-              # "package/feeds/packages/rust/host/download"
-              # "package/feeds/packages/ruby/host/download"
-              # "package/libs/gettext-full/host/download"
           )
+          echo "==== 开始 download ===="
           for target in "${LONG_TIME_TARGETS_DOWNLOAD[@]}"; do
               echo "==== 正在执行 download $target ===="
-              make $target -j1 || exit 1
+              make "$target" -j1 || exit 1
               sleep 5
               echo "------------------------"
           done
 
-
-          # echo "==== 3. 编译 Linux 内核 ===="
-          # time make target/compile -j$(nproc) || exit 1
-
-          echo "==== 编译包 ===="
           LONG_TIME_TARGETS_COMPILE=(
               "tools/compile"
               "toolchain/compile"
-              # "package/feeds/packages/golang/host/compile"
-              # "package/feeds/packages/rust/host/compile"
-              # "package/feeds/packages/ruby/host/compile"
-              # "package/libs/gettext-full/host/compile"
           )
+
+          VERBOSE=""
+          if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
+              VERBOSE="V=s"
+          fi
+
+          echo "==== 开始编译 ===="
           for target in "${LONG_TIME_TARGETS_COMPILE[@]}"; do
-              echo "==== 正在执行 compile $target ===="
-              if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
-                  time make $target -j$(nproc) V=s || exit 1
-                  sleep 5
-                  echo "------------------------"
-              else
-                  time make "$target" -j$(nproc) || exit 1
-                  sleep 5
-                  echo "------------------------"
-              fi
+              echo "==== 正在执行 compile $target $VERBOSE ===="
+              time make "$target" -j$(nproc) $VERBOSE || exit 1
+              sleep 5
+              echo "------------------------"
           done
 
+      # ---------------------------------------------------------------
+      # Checkpoint：Base 有变化就推新缓存到 GHCR
+      #   探测：找比 marker 新的 stamp，忽略每次必变但无复用价值的
+      #   推送：tar | zstd | split 切 5GB，每块一个 layer 绕开 Artifact 限制
+      # ---------------------------------------------------------------
       - name: Checkpoint Cache (Save Base to GHCR)
         if: steps.matrix_status.outputs.status != 'success' && steps.compile_base.outcome == 'success'
         run: |
+          set -e
           echo "==== 智能探测 Base 是否更新 ===="
           cd /workdir
-          
-          # 严谨的正则过滤：
-          # 1. 必须在 staging_dir/host/stamp/ 目录下，且以 .tools_compile_ 开头
-          # 2. 必须在 staging_dir/target-*/stamp/ 目录下，且名字严格叫 .target_prereq
-          
+
           IGNORE_PATTERN="staging_dir/host/stamp/\.tools_compile_|staging_dir/target-[^/]+/stamp/\.target_prereq$|staging_dir/host/stamp/\.(zstd|flock|libdeflate|pkgconf|xz|tar|patch|m4)_"
 
-          CHANGED_BASE=$(find openwrt/build_dir openwrt/staging_dir -type f -newer /workdir/base_compilation_marker -path "*/stamp/*" 2>/dev/null | \
-                          grep -E -v "$IGNORE_PATTERN" | \
-                          wc -l)
+          CHANGED_STAMPS=$(find openwrt/build_dir openwrt/staging_dir -type f \
+                            -newer /workdir/base_compilation_marker \
+                            -path "*/stamp/*" 2>/dev/null | \
+                            grep -E -v "$IGNORE_PATTERN" || true)
 
+          CHANGED_BASE=$(echo "$CHANGED_STAMPS" | grep -c . || true)
           echo "--- Found $CHANGED_BASE newer stamp files ---"
 
           if [ "$CHANGED_BASE" -eq 0 ]; then
@@ -614,83 +705,90 @@ jobs:
               exit 0
           fi
 
-          find openwrt/build_dir openwrt/staging_dir -type f -newer /workdir/base_compilation_marker -path "*/stamp/*" 2>/dev/null | \
-                          grep -E -v "$IGNORE_PATTERN"
+          echo "$CHANGED_STAMPS"
 
-          
-          
-          # （防止新下载的 tarball 比缓存 stamp 更新导致重编译）
-          # OpenWrt stamp 依赖链：.installed→.built→.configured→.preparedXXX→dl/source.tar.gz
-          # make download 每次都会重新下载 tarball，mtime = 现在，而缓存 stamp 时间是过去，
-          # make 看到 dl/ 比 stamp 新就会重编。将 dl/ 所有文件回拨到远古时间即可解决。
-          # PKG_HASH 若真的变了，stamp 文件名（含 hash）也变了，旧 stamp 不匹配，仍会正常重编。
-
-          echo "==== 回拨 dl/ 时间戳===="
-          find /workdir/openwrt/dl -type f | xargs -r touch -t 200001010000
+          echo "==== 回拨 dl/ 时间戳 ===="
+          find /workdir/openwrt/dl -type f -print0 2>/dev/null | \
+            xargs -0 -r touch -t 200001010000
           echo "✅ dl/ 时间戳逆转完成！"
 
           echo "⚡ 检测到 $CHANGED_BASE 个新 stamp，触发缓存更新存档..."
           df -hT
+
           echo "==== 自动修剪冗余版本 ===="
-          
           for linux_dir in openwrt/build_dir/target-*/linux-*/; do
-              [ -d "$linux_dir" ] && (cd "$linux_dir" && ls -dt linux-* 2>/dev/null | tail -n +2 | xargs -I {} rm -rf "{}")
+              [ -d "$linux_dir" ] && \
+                (cd "$linux_dir" && ls -dt linux-* 2>/dev/null | tail -n +2 | xargs -r -I {} rm -rf "{}")
           done
-          [ -d "openwrt/build_dir" ] && (cd openwrt/build_dir && ls -dt toolchain-* 2>/dev/null | tail -n +2 | xargs -I {} rm -rf "{}")
+          [ -d "openwrt/build_dir" ] && \
+            (cd openwrt/build_dir && ls -dt toolchain-* 2>/dev/null | tail -n +2 | xargs -r -I {} rm -rf "{}")
           if [ -d "openwrt/staging_dir" ]; then
-              (cd openwrt/staging_dir && ls -dt target-* 2>/dev/null | tail -n +2 | xargs -I {} rm -rf "{}")
-              (cd openwrt/staging_dir && ls -dt toolchain-* 2>/dev/null | tail -n +2 | xargs -I {} rm -rf "{}")
+              (cd openwrt/staging_dir && ls -dt target-*   2>/dev/null | tail -n +2 | xargs -r -I {} rm -rf "{}")
+              (cd openwrt/staging_dir && ls -dt toolchain-* 2>/dev/null | tail -n +2 | xargs -r -I {} rm -rf "{}")
           fi
 
           echo "==== 打包与 5GB 分块 ===="
           cd /workdir/openwrt
-          # 使用 split 临时切片为 op_cache_raw_00, op_cache_raw_01... (每块最大 5000M)
-          tar -I "zstd -T0 -10" -cf - build_dir staging_dir dl | split -a 3 -d -b 5000M - /workdir/op_cache_raw_
+          tar -I "zstd -T0 -10" -cf - build_dir staging_dir dl 2>/dev/null | \
+            split -a 3 -d -b 5000M - /workdir/op_cache_raw_
 
-          echo "==== 批量重命名并创建 Layer 隔离目录 ===="
+          echo "==== 创建 Layer 隔离目录 ===="
           cd /workdir
           echo "FROM scratch" > Dockerfile
-          
-          # 遍历默认分块，并分配到独立的 layerN 文件夹中
           count=1
           for f in op_cache_raw_*; do
               layer_dir="layer$count"
-              
               mkdir -p "$layer_dir"
-              # 直接把原文件扔进 layer 文件夹，不改名！
-              mv "$f" "$layer_dir/"
-              
+              mv "$f" "$layer_dir/"          # 分块移入 layer 目录，COPY 后平铺到镜像根
               echo "COPY $layer_dir /" >> Dockerfile
               count=$((count + 1))
           done
-          
-          echo "==== 开始构建与推送多层镜像 ===="
+
+          echo "==== 构建并推送多层镜像 ===="
           df -hT
           REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           PLATFORM_NAME=$(echo "${{ matrix.source_code_platform }}-${{ matrix.platform }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME="ghcr.io/seaks/openwrt-base-cache-$PLATFORM_NAME:latest"
+          IMAGE_NAME="ghcr.io/${REPO_OWNER}/openwrt-base-cache-${PLATFORM_NAME}:latest"
 
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          docker build -t "$IMAGE_NAME" .
+          docker push "$IMAGE_NAME"
           echo "✅ 分块多层缓存推送完毕！"
 
-          # 清理临时数据文件
-          echo "==== 清理临时数据文件 ===="
+          echo "==== 清理临时数据 ===="
           rm -rf layer* Dockerfile
-          docker rmi $IMAGE_NAME -f
-          docker builder prune -a -f
-          docker system prune -a -f
-          echo "✅ 清理临时数据文件完毕！"
+          docker rmi -f "$IMAGE_NAME" || true
+          # system prune -a 已包含 builder / image prune，一条就够
+          docker system prune -a -f || true
+          echo "✅ 清理完成！"
           df -hT
 
+      # ---------------------------------------------------------------
+      # 下载源码包
+      #   timeout 超时退出码 124，不区分的话日志里看不出是超时还是真失败
+      # ---------------------------------------------------------------
       - name: Download Package
         continue-on-error: true
         if: steps.matrix_status.outputs.status != 'success' && !cancelled()
         run: |
-          cd $GITHUB_WORKSPACE/openwrt
-          timeout 25m make download -j8
+          set -o pipefail
+          cd "$GITHUB_WORKSPACE/openwrt"
+          timeout 25m make download -j8 2>&1 | tee download.log
+          RC=${PIPESTATUS[0]}
+          if [ "$RC" -eq 124 ]; then
+              echo "⚠️ make download 超时（25m），已下载 $(find dl -type f | wc -l) 个文件"
+              echo "   编译阶段可能因缺源码失败，可增大 timeout 或调小 -j"
+          elif [ "$RC" -ne 0 ]; then
+              echo "⚠️ make download 退出码 $RC，尾部日志："
+              tail -30 download.log
+          else
+              echo "✅ make download 完成，共 $(find dl -type f | wc -l) 个文件"
+          fi
+          exit 0
 
-      # >>> 改动 4：Compile Packages and Firmware —— 第三次改 -j1 <<<
+      # ---------------------------------------------------------------
+      # 阶段二：编译全部包与固件
+      #   第 3 次尝试开 V=s；失败自动 tail 日志，不用手点折叠区
+      # ---------------------------------------------------------------
       - name: Compile Packages and Firmware
         id: compile
         if: steps.matrix_status.outputs.status != 'success' && !cancelled()
@@ -700,98 +798,100 @@ jobs:
           cd openwrt
           df -h
 
+          # rustdesk-server 只在 openwrt 官方源这条线装
           if [[ "${{ matrix.source_code_platform }}" == "openwrt" ]]; then
-            chmod +x $GITHUB_WORKSPACE/${{ matrix.value.DIY_P4_SH }} || true
-            source $GITHUB_WORKSPACE/${{ matrix.value.DIY_P4_SH }}
+            chmod +x "$GITHUB_WORKSPACE/${{ matrix.value.DIY_P4_SH }}" || true
+            # shellcheck disable=SC1090
+            source "$GITHUB_WORKSPACE/${{ matrix.value.DIY_P4_SH }}"
             install_rustdesk_server
           fi
-          
 
+          VERBOSE=""
           if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
-              make -j$(nproc) V=s
-              MAKE_EXIT_CODE=$?
-              exit $MAKE_EXIT_CODE
-          else
-              make -j$(nproc)
-              MAKE_EXIT_CODE=$?
-              exit $MAKE_EXIT_CODE
+              VERBOSE="V=s"
           fi
 
-      # >>> 核心改动：Organize Files —— 用 matrix.platform (Nightly/Release) 给固件加前缀，
-      #     并去掉 matrix_status 判断，避免被跳过导致固件无前缀 <<<
+          set -o pipefail
+          make -j$(nproc) $VERBOSE 2>&1 | tee compile.log
+          RC=${PIPESTATUS[0]}
+
+          if [ "$RC" -ne 0 ]; then
+              echo "==== make 失败，退出码 $RC，最后 60 行 ===="
+              tail -60 compile.log
+          fi
+          exit "$RC"
+
+      # ---------------------------------------------------------------
+      # 整理固件：加平台前缀，避免同 Release 内同名覆盖
+      # ---------------------------------------------------------------
       - name: Organize Files
         id: organize
-        if: steps.compile.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled() 
+        if: steps.compile.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
         run: |
           set -e
-
-          echo "==== DEBUG: platform=[${{ matrix.platform }}] ===="
-          echo "==== DEBUG: source_code_platform=[${{ matrix.source_code_platform }}] ===="
-          echo "==== DEBUG: matrix_status=[${{ steps.matrix_status.outputs.status }}] ===="
+          PREFIX="${{ matrix.platform }}"
+          SRC_PLATFORM="${{ matrix.source_code_platform }}"
+          echo "==== platform=$PREFIX  source=$SRC_PLATFORM ===="
 
           cd "$GITHUB_WORKSPACE/openwrt/bin/targets/"*/*
           firmware_path="$PWD"
-          echo "==== DEBUG: firmware_path=$firmware_path ===="
-          pwd
-          echo "==== 原始文件列表 ===="
+          echo "==== firmware_path=$firmware_path ===="
+          echo "---- 原始文件列表 ----"
           ls -la
 
           mkdir -p feeds_packages
           cp -r "$GITHUB_WORKSPACE/openwrt/bin/packages/"*/* "$firmware_path/feeds_packages/" 2>/dev/null || true
           cd "$firmware_path"
 
-          # 删除不需要的 rootfs 和 kernel 独立文件
+          # 只要固件，不要独立 rootfs / kernel
           rm -f *rootfs*.img.gz
           rm -f *kernel*.bin
 
-          PREFIX="${{ matrix.platform }}"
+          # 已带前缀的跳过，保证可重复执行
+          add_prefix() {
+            local pattern="$1" f
+            for f in $pattern; do
+              [ -e "$f" ] || continue
+              [ -f "$f" ] || continue
+              case "$f" in
+                "${PREFIX}_"*) echo "skip (already prefixed): $f" ;;
+                *) mv -v "$f" "${PREFIX}_$f" ;;
+              esac
+            done
+          }
 
-          # 1) 给固件镜像加前缀（Nightly_ / Release_）
-          for f in immortalwrt-* openwrt-* lede-*; do
-            [ -e "$f" ] || continue
-            [ -f "$f" ] || continue
-            case "$f" in
-              "${PREFIX}_"*) echo "skip (already prefixed): $f" ;;
-              *) mv -v "$f" "${PREFIX}_$f" ;;
-            esac
-          done
+          add_prefix 'immortalwrt-*'
+          add_prefix 'openwrt-*'
+          add_prefix 'lede-*'
 
-          # 2) 给校验/信息文件加前缀，避免同 Release 同名覆盖
           for f in sha256sums version.buildinfo config.buildinfo feeds.buildinfo *.manifest; do
-            [ -e "$f" ] || continue
-            [ -f "$f" ] || continue
-            case "$f" in
-              "${PREFIX}_"*) ;;
-              *) mv -v "$f" "${PREFIX}_$f" ;;
-            esac
+            add_prefix "$f"
           done
 
-          # 3) lede 源额外把 openwrt- 改成 lede-（在前缀之后执行，避免双前缀）
-          if [[ "${{ matrix.source_code_platform }}" == "lede" ]]; then
+          # lede 源额外把 openwrt- 改成 lede-（在前缀之后，避免双前缀）
+          if [[ "$SRC_PLATFORM" == "lede" ]]; then
             for file in openwrt-*; do
               [ -f "$file" ] || continue
               mv -v "$file" "${file/openwrt-/lede-}"
             done
           fi
 
-          # 4) 打包 buildinfo zip（命名带 platform 区分）
-          zip -r "buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip" */ || true
-          find . -maxdepth 1 -type f ! -name '*-*-*' ! -name '*.zip' -exec zip "buildinfo_${{ matrix.source_code_platform }}_${{ matrix.platform }}.zip" {} +
+          ZIPNAME="buildinfo_${SRC_PLATFORM}_${PREFIX}.zip"
+          zip -r "$ZIPNAME" */ || true
+          find . -maxdepth 1 -type f ! -name '*-*-*' ! -name '*.zip' -exec zip "$ZIPNAME" {} +
           find . -mindepth 1 ! \( -name '*-*-*' -o -name '*.zip' \) -exec rm -rf {} +
 
-          echo "==== 重命名后文件列表 ===="
+          echo "---- 重命名后文件列表 ----"
           ls -la
-
           echo "FIRMWARE=$firmware_path" >> "$GITHUB_OUTPUT"
 
-      # >>> 改动 5：Upload Release —— 同样去掉 matrix_status 判断 <<<
       - name: Upload Firmware To Release Directly
         if: steps.organize.outcome == 'success' && !cancelled()
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ needs.job_init.outputs.output_release_tag }}
+          tag_name: ${{ env.RELEASE_TAG }}
           fail_on_unmatched_files: true
           files: |
             ${{ steps.organize.outputs.FIRMWARE }}/*
@@ -812,6 +912,10 @@ jobs:
           path: openwrt/bin
           overwrite: true
 
+
+  # ==========================================================================
+  # 5. 整理 Release 正文与 tag
+  # ==========================================================================
   job_organize_tags:
     needs: [job_init, job_source_init, job_generate_release_tag, job_compile_and_upload]
     if: ${{ !cancelled() && needs.job_source_init.result == 'success' && needs.job_generate_release_tag.result == 'success' }}
@@ -819,15 +923,18 @@ jobs:
     name: Organize-Release-Tags
     outputs:
       output_tag_status: ${{ steps.organize_tags.outputs.status }}
-        
+    env:
+      RELEASE_TAG: ${{ needs.job_init.outputs.output_release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ env.GIT_REF_NAME }}
 
       - name: Pull the latest changes
-        run: git pull origin ${{ github.ref_name }}
+        run: |
+          set -e
+          git pull origin ${{ env.GIT_REF_NAME }}
 
       - name: Download Tags
         uses: actions/download-artifact@v8
@@ -837,8 +944,9 @@ jobs:
       - name: Organize Tags
         id: organize_tags
         run: |
-            chmod +x compile_script/step07_organize_tag.sh
-            $GITHUB_WORKSPACE/compile_script/step07_organize_tag.sh "${{ github.token }}" "${{ github.repository }}" "${{ github.run_id }}" "${{ fromJSON(github.run_attempt) }}" "3"
+          set -e
+          chmod +x compile_script/step07_organize_tag.sh
+          $GITHUB_WORKSPACE/compile_script/step07_organize_tag.sh "${{ github.token }}" "${{ github.repository }}" "${{ github.run_id }}" "${{ fromJSON(github.run_attempt) }}" "3"
 
       - name: Upload Tags To Artifact
         uses: actions/upload-artifact@v7
@@ -853,19 +961,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ needs.job_init.outputs.output_release_tag }}
+          tag_name: ${{ env.RELEASE_TAG }}
           body_path: release.txt
 
+
+  # ==========================================================================
+  # 6. 收尾
+  # ==========================================================================
   rerun-failed-jobs:
     runs-on: ubuntu-latest
     needs: [job_init, job_source_init, job_generate_release_tag, job_compile_and_upload, job_organize_tags]
-    if: failure() && fromJSON(github.run_attempt) < 3  && !cancelled()
+    if: failure() && fromJSON(github.run_attempt) < 3 && !cancelled()
     steps:
       - name: Rerun failed jobs in the current workflow
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -e
           echo "Retry failed jobs for the ${{ fromJSON(github.run_attempt) }} time, Retry 3 times in total"
           gh workflow run Retry_Failure_Jobs.yml -F run_id=${{ github.run_id }}
 
@@ -881,17 +994,3 @@ jobs:
           token: ${{ secrets.MY_SECRET_PAT }}
           repository: seaks/OpenWrtAction
           event-type: openwrt_compilation_completed
-
-      # - name: Stateful Lifecycle Check
-      #   id: lifecycle_check
-      #   run: |
-      #     chmod +x compile_script/check_lifecycle.sh
-      #     $GITHUB_WORKSPACE/compile_script/check_lifecycle.sh
-
-      # - name: Trigger Cache Update
-      #   if: ${{ needs.rerun-failed-jobs.result == 'skipped' }}
-      #   uses: peter-evans/repository-dispatch@v4
-      #   with:
-      #     token: ${{ github.token }}
-      #     event-type: openwrt_cache_update_v6
-      #     client-payload: '{"force_rebuild": "${{ steps.lifecycle_check.outputs.force_rebuild }}"}'
