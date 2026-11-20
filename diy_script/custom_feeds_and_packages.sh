@@ -67,7 +67,7 @@ append_feeds() {
 }
 # feeds install 之后调用：校验 bandix 前后端版本对齐
 check_bandix_ver() {
-    echo "===== 校验 bandix 前后端版本，期望 ${BANDIX_VER}.x ====="
+    echo "===== 校验 bandix 前后端版本是否一致 ====="
     local be_feeds="$TOPDIR/feeds/bandix_backend/openwrt-bandix/Makefile"
     local fe_feeds="$TOPDIR/feeds/bandix/luci-app-bandix/Makefile"
     if [ ! -f "$be_feeds" ] || [ ! -f "$fe_feeds" ]; then
