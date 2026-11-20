@@ -128,11 +128,14 @@ jobs:
         run: |
           git checkout -b temp-${{ matrix.source_code_platform }}
 
+
+
       - name: Make Defconfig Custom Configuration
         run: |
           chmod +x compile_script/step01_make_defconfig.sh
           cd openwrt
           $GITHUB_WORKSPACE/compile_script/step01_make_defconfig.sh "${{ matrix.source_code_platform }}" "${{ matrix.value.CONFIGS }}"
+
 
       - name: Merge and push changes with "theirs" strategy
         run: |
@@ -153,6 +156,8 @@ jobs:
               git fetch origin ${{ github.ref_name }}
               git reset --hard origin/${{ github.ref_name }}
               
+              # 合并当前的临时分支
+              # git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs --no-edit
               git merge temp-${{ matrix.source_code_platform }} --strategy-option theirs -m "[CI] Merge: temp-${{ matrix.source_code_platform }}"
               
               if git push origin ${{ github.ref_name }}; then
@@ -531,12 +536,11 @@ jobs:
           fi
 
           df -hT
-
+     
       - name: SSH connection to Actions
         uses: owenthereal/action-upterm@v2
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
-      # >>> 改动 2：路径修正为带 lang/ 的真实路径，并加 [ -d ] 跳过不存在目标 <<<
       - name: Compile Base (Tools, Toolchain, Kernel, LongTime Packages)
         id: compile_base
         if: steps.matrix_status.outputs.status != 'success'
@@ -549,21 +553,18 @@ jobs:
           LONG_TIME_TARGETS_DOWNLOAD=(
               "tools/download"
               "toolchain/download"
-              "package/feeds/packages/lang/golang/host/download"
-              "package/feeds/packages/lang/rust/host/download"
-              "package/feeds/packages/lang/ruby/host/download"
-              "package/libs/gettext-full/host/download"
+              # "package/feeds/packages/golang/host/download"
+              # "package/feeds/packages/rust/host/download"
+              # "package/feeds/packages/ruby/host/download"
+              # "package/libs/gettext-full/host/download"
           )
           for target in "${LONG_TIME_TARGETS_DOWNLOAD[@]}"; do
-              if [ ! -d "$target" ]; then
-                  echo "---- skip (not found): $target ----"
-                  continue
-              fi
               echo "==== 正在执行 download $target ===="
-              make "$target" -j1 || echo "⚠️ download failed: $target (继续)"
+              make $target -j1 || exit 1
               sleep 5
               echo "------------------------"
           done
+
 
           # echo "==== 3. 编译 Linux 内核 ===="
           # time make target/compile -j$(nproc) || exit 1
@@ -572,20 +573,15 @@ jobs:
           LONG_TIME_TARGETS_COMPILE=(
               "tools/compile"
               "toolchain/compile"
-              "package/feeds/packages/lang/golang/host/compile"
-              "package/feeds/packages/lang/rust/host/compile"
-              "package/feeds/packages/lang/ruby/host/compile"
-              "package/libs/gettext-full/host/compile"
+              # "package/feeds/packages/golang/host/compile"
+              # "package/feeds/packages/rust/host/compile"
+              # "package/feeds/packages/ruby/host/compile"
+              # "package/libs/gettext-full/host/compile"
           )
           for target in "${LONG_TIME_TARGETS_COMPILE[@]}"; do
-              if [ ! -d "$target" ]; then
-                  echo "---- skip (not found): $target ----"
-                  continue
-              fi
               echo "==== 正在执行 compile $target ===="
-              # run_attempt == 2 时单线程 verbose，便于定位失败
-              if [[ "${{ github.run_attempt }}" == "2" ]]; then
-                  time make "$target" -j1 V=s || exit 1
+              if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
+                  time make $target -j$(nproc) V=s || exit 1
                   sleep 5
                   echo "------------------------"
               else
@@ -621,6 +617,8 @@ jobs:
           find openwrt/build_dir openwrt/staging_dir -type f -newer /workdir/base_compilation_marker -path "*/stamp/*" 2>/dev/null | \
                           grep -E -v "$IGNORE_PATTERN"
 
+          
+          
           # （防止新下载的 tarball 比缓存 stamp 更新导致重编译）
           # OpenWrt stamp 依赖链：.installed→.built→.configured→.preparedXXX→dl/source.tar.gz
           # make download 每次都会重新下载 tarball，mtime = 现在，而缓存 stamp 时间是过去，
@@ -709,8 +707,8 @@ jobs:
           fi
           
 
-          if [[ "${{ github.run_attempt }}" == "3" ]]; then
-              make -j1 V=s
+          if [[ ${{ fromJSON(github.run_attempt) }} == 3 ]]; then
+              make -j$(nproc) V=s
               MAKE_EXIT_CODE=$?
               exit $MAKE_EXIT_CODE
           else
@@ -881,7 +879,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.MY_SECRET_PAT }}
-          repository: seaks/MyAction
+          repository: seaks/OpenWrtAction
           event-type: openwrt_compilation_completed
 
       # - name: Stateful Lifecycle Check
