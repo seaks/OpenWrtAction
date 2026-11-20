@@ -4,17 +4,13 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/seaks
 # File name: diy-part1.sh
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
 #
-
 set -e
-
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 export TOPDIR="$PWD"
-
 FEEDS_SCRIPT="$PARENT_DIR/custom_feeds_and_packages.sh"
 if [ ! -f "$FEEDS_SCRIPT" ]; then
     echo "!!! 找不到 $FEEDS_SCRIPT" >&2
@@ -22,23 +18,18 @@ if [ ! -f "$FEEDS_SCRIPT" ]; then
     echo "    确认 custom_feeds_and_packages.sh 放在 OpenWrtAction/ 根目录下" >&2
     exit 1
 fi
-
 # source 只加载函数与变量（文件末尾 main 已注释，不会自动执行业务）
 source "$FEEDS_SCRIPT"
-
 # 防御：确认函数确实加载进来了
 command -v append_feeds >/dev/null 2>&1 \
     || { echo "!!! append_feeds 未定义，source 可能失败" >&2; exit 1; }
 command -v clone_custom_packages >/dev/null 2>&1 \
     || { echo "!!! clone_custom_packages 未定义" >&2; exit 1; }
-
 echo "===== TOPDIR=$TOPDIR ===="
 echo "===== 追加自定义 feeds 到文件末尾（高优先级） ===="
 append_feeds
-
 echo "===== 克隆自定义包 ===="
 clone_custom_packages
-
 echo "===== 最终 feeds.conf.default ===="
 if [ -f "$FEEDS_CONF" ]; then
     cat "$FEEDS_CONF"
@@ -47,5 +38,4 @@ else
     exit 1
 fi
 echo "==================================="
-
 echo "✅ diy-part1 finished"
