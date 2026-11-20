@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2019-2025 SmallProgram <https://github.com/smallprogram>
+# Copyright (c) 2019-2026 SmallProgram <https://github.com/seaks>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -26,7 +26,7 @@ echo "修正相关package的hash值"
 # # 过滤掉开头的英文字符，按照openwrt规定
 # CLEAN_VERSION=$(echo "$LATEST_TAG" | sed 's/^[a-zA-Z_]*//')
 # LATEST_SMARTDNS=$(curl -sL "https://api.github.com/repos/pymumu/smartdns/commits/$LATEST_TAG" | jq -r .sha)
-# LATEST_WEBUI=$(curl -sL https://api.github.com/repos/pymumu/smartdns-webui/commits | jq -r '.[0].sha')
+# LATEST_WEBUI=$(curl -sL "https://api.github.com/repos/pymumu/smartdns-webui/commits | jq -r '.[0].sha')
 # if [ -z "$LATEST_SMARTDNS" ] || [ "$LATEST_SMARTDNS" == "null" ]; then
 #     echo "Failed to fetch SmartDNS commit"
 #     exit 1
