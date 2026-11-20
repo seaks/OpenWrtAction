@@ -160,67 +160,6 @@ else
     fi
 fi
 
-# ==============================================
-# xray-core 版本校准（必须在 diy2，feeds update 之后）
-# 只改 Makefile 版本号 + 预下载源码，不动目录结构
-# ==============================================
-XRAY_VER="25.2.21"
-XRAY_SHA="a565db518d2da12fabb74e123d9bf2bdbc34420b81373938f8fcbc7004fda3ba"
-XRAY_URL="https://codeload.github.com/XTLS/Xray-core/tar.gz/v${XRAY_VER}"
-XRAY_FILE="dl/xray-core-${XRAY_VER}.tar.gz"
-
-XRAY_MK=$(find feeds -path "*xray-core*/Makefile" 2>/dev/null | head -n1)
-if [ -n "$XRAY_MK" ] && [ -f "$XRAY_MK" ]; then
-    CUR_VER=$(grep -m1 '^PKG_VERSION:=' "$XRAY_MK" | awk '{print $3}')
-    echo ">>> xray-core 当前版本：$CUR_VER  ($XRAY_MK)"
-
-    if [ "$CUR_VER" != "$XRAY_VER" ]; then
-        echo ">>> 版本不符，改为 $XRAY_VER"
-        sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${XRAY_VER}/" "$XRAY_MK"
-        sed -i "s/^PKG_HASH:=.*/PKG_HASH:=${XRAY_SHA}/" "$XRAY_MK"
-        rm -f dl/xray-core-*.tar.gz 2>/dev/null || true
-    else
-        echo ">>> 已是 $XRAY_VER，无需改 Makefile"
-    fi
-
-    # 预下载源码到 dl/，带 hash 校验，避免截断包拖到编译期才暴露
-    mkdir -p dl
-    need_dl=1
-    if [ -f "$XRAY_FILE" ]; then
-        if [ "$(sha256sum "$XRAY_FILE" | awk '{print $1}')" = "$XRAY_SHA" ]; then
-            echo "✅ dl 缓存校验通过，跳过下载"
-            need_dl=0
-        else
-            echo "⚠️ 缓存校验失败，重新下载"
-            rm -f "$XRAY_FILE"
-        fi
-    fi
-    if [ "$need_dl" = "1" ]; then
-        echo ">>> 预下载 xray-core 源码..."
-        curl -fL --retry 3 --retry-delay 5 --connect-timeout 30 -o "$XRAY_FILE" "$XRAY_URL"
-        if [ $? -eq 0 ]; then
-            if [ "$(sha256sum "$XRAY_FILE" | awk '{print $1}')" = "$XRAY_SHA" ]; then
-                echo "✅ 下载+sha校验通过"
-            else
-                echo "❌ 下载完成但哈希不匹配！"
-                rm -f "$XRAY_FILE"
-            fi
-        else
-            echo "⚠️ 下载失败，编译时会重试"
-            rm -f "$XRAY_FILE"
-        fi
-    fi
-    grep -E "^PKG_(VERSION|HASH):=" "$XRAY_MK"
-else
-    echo "!!! 未找到 xray-core Makefile，跳过"
-fi
-
-# ==============================================
-# feeds 目录结构被改动（rust / golang），必须重建软链接
-# 不做这步，替换不会生效
-# ==============================================
-echo ">>> 重新安装 feeds..."
-./scripts/feeds install -a
 
 echo "DIY2 is complete!"
 #------------------------------------------------end 修改脚本-------------------------------------------------------
