@@ -1,41 +1,53 @@
 #!/bin/bash
 #
-# Copyright (c) 2019-2026 seaks <https://github.com/seaks>
+# Copyright (c) 2019-2025 SmallProgram <https://github.com/smallprogram>
+#
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
+# https://github.com/smallprogram/OpenWrtAction
 # File name: diy-part1.sh
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
 #
-set -e
+
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
-export TOPDIR="$PWD"
-FEEDS_SCRIPT="$PARENT_DIR/custom_feeds_and_packages.sh"
-if [ ! -f "$FEEDS_SCRIPT" ]; then
-    echo "!!! 找不到 $FEEDS_SCRIPT" >&2
-    echo "    当前 PARENT_DIR=$PARENT_DIR" >&2
-    echo "    确认 custom_feeds_and_packages.sh 放在 OpenWrtAction/ 根目录下" >&2
-    exit 1
-fi
-# source 只加载函数与变量（文件末尾 main 已注释，不会自动执行业务）
-source "$FEEDS_SCRIPT"
-# 防御：确认函数确实加载进来了
-command -v append_feeds >/dev/null 2>&1 \
-    || { echo "!!! append_feeds 未定义，source 可能失败" >&2; exit 1; }
-command -v clone_custom_packages >/dev/null 2>&1 \
-    || { echo "!!! clone_custom_packages 未定义" >&2; exit 1; }
-echo "===== TOPDIR=$TOPDIR ===="
-echo "===== 追加自定义 feeds 到文件末尾（高优先级） ===="
-append_feeds
-echo "===== 克隆自定义包 ===="
+source "$PARENT_DIR/custom_feeds_and_packages.sh"
+
+# ---------------------------------------------------------------feeds update---------------------------------------------------------------
+# 备份原始 feeds.conf.default
+cp -a feeds.conf.default feeds.conf.default.bak
+
+# 删除 feeds.conf.default 中的注释行（以 # 开头）
+sed -i '/^#/d' feeds.conf.default
+sed -i -e 's|git.openwrt.org/feed|github.com/openwrt|g' -e 's|git.openwrt.org/project|github.com/openwrt|g' feeds.conf.default
+
+
+# 创建临时文件
+temp_file=$(mktemp)
+
+# 倒序遍历 repos 数组
+for ((i=${#repos[@]}-1; i>=0; i--)); do
+  repo="${repos[$i]}"
+  # 提取 feed 名称（src-git 后的第一个字段）
+  feed_name=$(echo "$repo" | awk '{print $2}')
+  
+  # 检查 feeds.conf.default 是否包含该 feed 名称
+  if ! grep -q "src-git $feed_name " feeds.conf.default; then
+    # 如果不存在，将该 repo 插入到临时文件的第一行
+    echo "$repo" > "$temp_file"
+    cat feeds.conf.default >> "$temp_file"
+    mv "$temp_file" feeds.conf.default
+    echo "Added: $repo"
+  else
+    echo "Skipped (already exists): $repo"
+  fi
+done
+
+# 清理临时文件（如果仍然存在）
+[ -f "$temp_file" ] && rm "$temp_file"
+
+echo "Updated feeds.conf.default"
+# ---------------------------------------------------------------end feeds update---------------------------------------------------------------
+
 clone_custom_packages
-echo "===== 最终 feeds.conf.default ===="
-if [ -f "$FEEDS_CONF" ]; then
-    cat "$FEEDS_CONF"
-else
-    echo "!!! $FEEDS_CONF 不存在，TOPDIR=$TOPDIR" >&2
-    exit 1
-fi
-echo "==================================="
-echo "✅ diy-part1 finished"
