@@ -1,0 +1,9 @@
+<details> <summary> <b>openwrt-passwall2 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall2/compare/cb6fc9f65599a4a5eb863916284aa82ac6fa55c9...7d6bae5bdd164abfdae5a34e85af3774f7481497)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+7d6bae5|A-BO|Fri Nov 20 02:03:05 2026 +0800|luci: batch UCI writes for subscription nodes
+</details>
