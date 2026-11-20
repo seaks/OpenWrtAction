@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Copyright (c) 2019-2026 seaks <https://github.com/seaks>
+# Copyright (c) 2019-2026 SmallProgram <https://github.com/smallprogram>
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/smallprogram/OpenWrtAction
+# https://github.com/seaks/OpenWrtAction
 # File name: diy-part1.sh
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
 #
@@ -23,24 +23,29 @@ if [ ! -f "$FEEDS_SCRIPT" ]; then
     exit 1
 fi
 
-# source 只加载函数与变量（文件末尾有 BASH_SOURCE 守卫，不会自动执行 main）
+# source 只加载函数与变量（文件末尾 main 已注释，不会自动执行业务）
 source "$FEEDS_SCRIPT"
 
 # 防御：确认函数确实加载进来了
-command -v append_feeds >/dev/null 2>&1 \
-    || { echo "!!! append_feeds 未定义，source 可能失败" >&2; exit 1; }
+command -v append_feeds_top >/dev/null 2>&1 \
+    || { echo "!!! append_feeds_top 未定义，source 可能失败" >&2; exit 1; }
 command -v clone_custom_packages >/dev/null 2>&1 \
     || { echo "!!! clone_custom_packages 未定义" >&2; exit 1; }
 
-echo "===== TOPDIR=$TOPDIR ====="
-echo "===== 追加自定义 feeds ====="
-append_feeds
+echo "===== TOPDIR=$TOPDIR ===="
+echo "===== 插入自定义 feeds 到顶部 ===="
+append_feeds_top
 
-echo "===== 克隆自定义包 ====="
+echo "===== 克隆自定义包 ===="
 clone_custom_packages
 
-echo "===== 最终 feeds.conf.default ====="
-cat "$FEEDS_CONF"
+echo "===== 最终 feeds.conf.default ===="
+if [ -f "$FEEDS_CONF" ]; then
+    cat "$FEEDS_CONF"
+else
+    echo "!!! $FEEDS_CONF 不存在，TOPDIR=$TOPDIR" >&2
+    exit 1
+fi
 echo "==================================="
 
 echo "✅ diy-part1 finished"
