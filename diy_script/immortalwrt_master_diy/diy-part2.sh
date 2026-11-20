@@ -113,27 +113,22 @@ fi
 echo "    $(grep -m1 '^PKG_VERSION' feeds/packages/lang/rust/Makefile 2>/dev/null || echo 'Makefile 未取到')"
 
 # ----------------------------------------------------------------
-# 2. golang —— sbwml 维护版
+# 2. golang —— sbwml 维护版 27.x
 # ----------------------------------------------------------------
-GOLANG_BRANCH="${GOLANG_BRANCH:-26.x}"
+GOLANG_BRANCH="27.x"
 echo ">>> 替换 golang -> sbwml/packages_lang_golang ($GOLANG_BRANCH)"
 
-TMP_GO=$(mktemp -d)
-if git clone --depth 1 -b "$GOLANG_BRANCH" -c http.timeout=120 \
-        https://github.com/sbwml/packages_lang_golang.git "$TMP_GO/golang" 2>"$TMP_GO/e"; then
-    rm -rf "feeds/packages/lang/golang"
-    mv "$TMP_GO/golang" "feeds/packages/lang/golang"
-    rm -rf "feeds/packages/lang/golang/.git"
+rm -rf feeds/packages/lang/golang
+if git clone --depth 1 -b "$GOLANG_BRANCH" -c http.timeout=180 \
+    https://github.com/sbwml/packages_lang_golang.git feeds/packages/lang/golang 2>golang-clone.log; then
+    rm -rf feeds/packages/lang/golang/.git
     GO_VER=$(grep -m1 '^GO_VERSION:=' feeds/packages/lang/golang/golang/Makefile 2>/dev/null | sed 's/^GO_VERSION:=//')
     echo "✅ golang 替换完成：${GO_VER:-版本未取到}"
 else
-    echo "!!! golang clone 失败，保留源码原版" >&2
-    sed 's/^/    /' "$TMP_GO/e" >&2
+    echo "⚠️ golang clone失败，保留源码原版golang，继续编译" >&2
+    cat golang-clone.log >&2
+    rm -rf golang-clone.log
 fi
-rm -rf "$TMP_GO"
-
-echo "🎉 移植包处理完成"
-#------------------------------------------------------end移植包--------------------------------------------------------
 
 #-----------------------------------------------基础修改------------------------------------------------------------
 # 默认 IP
