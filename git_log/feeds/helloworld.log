@@ -1,0 +1,10 @@
+<details> <summary> <b>helloworld 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/fw876/helloworld/compare/67449c659329e92d683075962555d602c98978b3...8134e2fff2b49b5f4308d295d2b2a987ca7207ec)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+8134e2f|zxlhhyccc|Sat Nov 21 14:38:02 2026 +0800|luci-app-ssr-plus: add IDN domain handling in gfw2ipset
+260ff84|zxlhhyccc|Sat Nov 21 14:34:03 2026 +0800|luci-app-ssr-plus: fix Makefile dependency drift
+</details>
