@@ -8,12 +8,12 @@ export repos=(
   "src-git OpenClash https://github.com/vernesong/OpenClash;master"
   "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
   "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
-  "src-git helloworld https://github.com/fw876/helloworld.git;dev"
   "src-git bandix https://github.com/timsaya/luci-app-bandix.git;main"
   "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
   "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
   "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
-  #  "src-git small https://github.com/kenzok8/small"
+  # "src-git helloworld https://github.com/fw876/helloworld.git;dev"
+  # "src-git small https://github.com/kenzok8/small"
 )
 
 # 自定义软件包列表
