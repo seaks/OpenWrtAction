@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source_code_platforms=(immortalwrt_snapshot)
+source_code_platforms=(immortalwrt_master immortalwrt_snapshot)
 
 immortalwrt_master_value='{
   "REPO_URL": "https://github.com/immortalwrt/immortalwrt",
