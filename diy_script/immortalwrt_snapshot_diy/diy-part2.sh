@@ -102,7 +102,6 @@ inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
 # 2. 替换 golang 为 sbwml 27.x
 echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
 rm -rf feeds/packages/lang/golang
-rm -rf package/feeds/packages/golang
 git clone --depth 1 -b 27.x https://github.com/sbwml/packages_lang_golang feeds/packages/lang/golang
 echo "✅ golang 替换完成"
 
