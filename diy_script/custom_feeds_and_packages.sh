@@ -2,7 +2,6 @@
 
 # feeds扩展内容（删掉mosdns行）
 export repos=(
-  "src-git small https://github.com/kenzok8/small"
   "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main"
   "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git;main"
   "src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git;main"
@@ -14,6 +13,7 @@ export repos=(
   "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
   "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
   "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
+  #  "src-git small https://github.com/kenzok8/small"
 )
 
 # 自定义软件包列表
