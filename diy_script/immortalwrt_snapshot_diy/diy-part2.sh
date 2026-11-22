@@ -100,13 +100,8 @@ inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
     "lang/rust"
 
 # 2. 替换 golang 为 sbwml 27.x
-#    位置正确：feeds/packages/lang/golang 是 feed 内部的包目录，
-#    随后的 ./scripts/feeds install -a 会把它软链到 package/feeds/packages/golang
 echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
 rm -rf feeds/packages/lang/golang
-# ⚠️ 关键：feed 源目录删掉后，旧的软链接还指向已删除的路径，
-#    feeds install -a 默认只补缺失项、不清理失效链，
-#    不手动删就会报 golang-package.mk not found
 rm -rf package/feeds/packages/golang
 git clone --depth 1 -b 27.x https://github.com/sbwml/packages_lang_golang feeds/packages/lang/golang
 echo "✅ golang 替换完成"
