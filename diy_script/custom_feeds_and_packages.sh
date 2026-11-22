@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# feeds扩展内容（删掉mosdns行）
+# feeds扩展内容
 export repos=(
   "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main"
   "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git;main"
