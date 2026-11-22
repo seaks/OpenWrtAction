@@ -141,7 +141,7 @@ jobs:
 
           if ! git diff --cached --quiet; then
             git config user.name "seaks"
-            git config user.email "lei.seaks@gmail.com.com"
+            git config user.email "lei.seaks@gmail.com"
             git commit -m "[CI] Configuration: update code for ${{ matrix.source_code_platform }}"
 
             MAX_RETRIES=10

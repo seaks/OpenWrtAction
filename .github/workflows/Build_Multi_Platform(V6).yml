@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2022-2026 seaks <https://github.com/seaks/OpenWrtAction>
+# Copyright (c) 2022-2027 seaks <https://github.com/seaks/OpenWrtAction>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -26,11 +26,14 @@
 # 缓存：build_dir / staging_dir / dl → zstd 压成 5GB 分块 → 每块一个 docker layer
 #       绕过 Artifact 10GB 上限；dl 时间戳回拨 2000 年，防 make 误判重编
 #
-# 缓存恢复原理（易误解，写清楚）：
+# 缓存恢复原理：
 #   Checkpoint: tar | zstd | split  →  得到单个 zstd 流的 N 个连续片段
 #   每片一个 layer，Dockerfile 用 COPY layerN /  →  平铺到镜像根目录
 #   docker export 输出的是「平铺合并后的单个 tar 流」，不是 save 的分层 tar
 #   所以 cat 拼回的仍是同一个 zstd 流，tar -I zstd 可直接解（不需要 zstdcat）
+#
+#   实测：源码与 .config 未变时 Checkpoint 报 "Found 0 newer stamp files"，
+#         Base 阶段从 1~1.5h 降到 2~3min，链路已验证可用
 # ============================================================================
 
 name: Build_Multi_Platform(V6)
@@ -455,27 +458,36 @@ jobs:
 
       # ---------------------------------------------------------------
       # 安装编译依赖
-      #   ⚠️ 不要写成 apt-get install $(curl ...)：
-      #     命令替换里的 curl 失败不触发 set -e，退出码被丢掉，
-      #     apt-get 收到空参数 → 要么报错、要么「什么都没装还继续跑」，
-      #     后面报一堆 command not found，根本看不出根因在依赖没装
-      #   -f 让 curl 对 404 返回非 0，中间变量接住后再判空
+      #   不用 sudo -E：runner 的 sudoers 有 env_reset，-E 会被忽略并刷警告
+      #   改成在 sudo 命令行上显式传 DEBIAN_FRONTEND（只禁继承全部，不禁指定个别）
+      #
+      #   curl 退出码用 set +e / set -e 夹住捕获；判断时加引号，
+      #   否则 DEP_RC 万一为空会变成 "[ -ne 0 ]" → unary operator expected，
+      #   连下面的错误提示都打印不出来
+      #
+      #   diy_script/<platform>_dependence 必须存在（无扩展名），
+      #   少一个文件就是 404，这里会明确报出来而不是静默装空
       # ---------------------------------------------------------------
       - name: Install Packages
         if: steps.matrix_status.outputs.status != 'success'
-        env:
-          DEBIAN_FRONTEND: noninteractive
         run: |
           set -e
-          DEP_LIST=$(curl -fsSL "https://github.com/seaks/OpenWrtAction/raw/main/diy_script/${{ matrix.source_code_platform }}_dependence")
-          if [ -z "$DEP_LIST" ]; then
-            echo "!!! 依赖清单为空（平台：${{ matrix.source_code_platform }}），abort" >&2
+          DEP_URL="https://github.com/seaks/OpenWrtAction/raw/main/diy_script/${{ matrix.source_code_platform }}_dependence"
+          set +e
+          DEP_LIST=$(curl -fsSL "$DEP_URL")
+          DEP_RC=$?
+          set -e
+          if [ "$DEP_RC" -ne 0 ] || [ -z "$DEP_LIST" ]; then
+            echo "!!! 获取依赖清单失败 (rc=$DEP_RC)，平台：${{ matrix.source_code_platform }}" >&2
             exit 1
           fi
           echo "---- 待装依赖 ----"
           echo "$DEP_LIST"
-          sudo -E apt-get -qq update
-          sudo -E apt-get -qq install $DEP_LIST
+          sudo DEBIAN_FRONTEND=noninteractive apt-get -qq update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            $DEP_LIST
 
       - name: Initialization Directory
         working-directory: /workdir
@@ -581,7 +593,7 @@ jobs:
       #   split 切的是「tar | zstd」的单个压缩流，cat 拼回仍是同一个流，
       #   因此 tar -I zstd 可直接解（不是 docker save 那种分层独立压缩）
       #
-      #   pipefail：tar 解失败时不能继续 rm 掉分块，否则连重试的机会都没了
+      #   pipefail：tar 解失败时不能继续 rm 掉分块，保留现场便于排查
       # ---------------------------------------------------------------
       - name: Restore Entire OpenWrt Cache from GHCR
         id: restore_cache
@@ -612,8 +624,8 @@ jobs:
           tar -xf cache_exported.tar --wildcards "op_cache_raw_*"
           rm -f cache_exported.tar
 
-          # 按版本号排序，保证分块顺序正确
-          mapfile -t PARTS < <(ls -1 op_cache_raw_* | sort -V)
+          # 按版本号排序，保证分块顺序正确；屏蔽无文件时的冗余报错
+          mapfile -t PARTS < <(ls -1 op_cache_raw_* 2>/dev/null | sort -V)
 
           if [ "${#PARTS[@]}" -eq 0 ]; then
             echo "⚠️ 未找到有效缓存分块，转入 clean build"
@@ -682,6 +694,10 @@ jobs:
       # Checkpoint：Base 有变化就推新缓存到 GHCR
       #   探测：找比 marker 新的 stamp，忽略每次必变但无复用价值的
       #   推送：tar | zstd | split 切 5GB，每块一个 layer 绕开 Artifact 限制
+      #
+      #   实测两种输出都健康：
+      #     没变 → "🎉 Found 0 newer stamp files"
+      #     变了 → "⚡ 检测到 N 个新 stamp" + "✅ 分块多层缓存推送完毕"
       # ---------------------------------------------------------------
       - name: Checkpoint Cache (Save Base to GHCR)
         if: steps.matrix_status.outputs.status != 'success' && steps.compile_base.outcome == 'success'
@@ -823,6 +839,13 @@ jobs:
 
       # ---------------------------------------------------------------
       # 整理固件：加平台前缀，避免同 Release 内同名覆盖
+      #
+      #   ⚠️ 不要写 cd bin/targets/*/* ：
+      #      多平台并行时该 glob 可能展开成多个目录 → cd 报 too many arguments；
+      #      无匹配时拿到字面量 → cd 失败。先接住再判目录
+      #
+      #   feeds_packages 的处理：目录保留下来随 Release / Artifact 上传，
+      #   但其内容不塞进 buildinfo zip —— 否则几百 MB ipk 会被压两遍
       # ---------------------------------------------------------------
       - name: Organize Files
         id: organize
@@ -833,7 +856,13 @@ jobs:
           SRC_PLATFORM="${{ matrix.source_code_platform }}"
           echo "==== platform=$PREFIX  source=$SRC_PLATFORM ===="
 
-          cd "$GITHUB_WORKSPACE/openwrt/bin/targets/"*/*
+          TARGET_DIR=$(echo "$GITHUB_WORKSPACE/openwrt/bin/targets/"*/*)
+          if [ ! -d "$TARGET_DIR" ]; then
+            echo "!!! 找不到固件目录：$TARGET_DIR" >&2
+            ls -la "$GITHUB_WORKSPACE/openwrt/bin/targets/" || true
+            exit 1
+          fi
+          cd "$TARGET_DIR"
           firmware_path="$PWD"
           echo "==== firmware_path=$firmware_path ===="
           echo "---- 原始文件列表 ----"
@@ -876,10 +905,13 @@ jobs:
             done
           fi
 
+          # zip 只收固件与 buildinfo；-x 排除 feeds_packages
           ZIPNAME="buildinfo_${SRC_PLATFORM}_${PREFIX}.zip"
-          zip -r "$ZIPNAME" */ || true
+          zip -r "$ZIPNAME" */ -x 'feeds_packages/*' || true
           find . -maxdepth 1 -type f ! -name '*-*-*' ! -name '*.zip' -exec zip "$ZIPNAME" {} +
-          find . -mindepth 1 ! \( -name '*-*-*' -o -name '*.zip' \) -exec rm -rf {} +
+
+          # 清理中间产物，但保留：带前缀的固件(*-*-*)、zip、feeds_packages/
+          find . -mindepth 1 ! \( -name '*-*-*' -o -name '*.zip' -o -name 'feeds_packages' \) -exec rm -rf {} +
 
           echo "---- 重命名后文件列表 ----"
           ls -la
