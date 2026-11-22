@@ -9,7 +9,7 @@ export repos=(
   "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
   "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
   "src-git helloworld https://github.com/fw876/helloworld.git;dev"
-#   "src-git small https://github.com/kenzok8/small"
+  "src-git small https://github.com/kenzok8/small"
 
 )
 
