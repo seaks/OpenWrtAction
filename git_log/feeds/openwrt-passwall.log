@@ -1,0 +1,24 @@
+<details> <summary> <b>openwrt-passwall 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/b3cf8e768ba11d9172e9db7bdd6af17eaf8580f7...89ecdea8a44593c8055811c637b0c1a94d88453f)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+89ecdea8|A-BO|2026-11-23 01:41:11 +0800|luci: fix RAW HTTP Host and Path handling
+b3cf8e76|A-BO|2026-11-20 01:53:39 +0800|luci: batch UCI writes for subscription nodes
+38885d95|A-BO|2026-11-19 21:55:06 +0800|luci: resolve XHTTP download addresses with node-specific DNS
+d68b9bff|A-BO|2026-11-19 21:41:42 +0800|luci: support per-node DNS policies in Clash subscriptions
+f8001b90|A-BO|2026-11-18 22:31:06 +0800|luci: add WireGuard and MASQUE support to Clash subscription conversion
+190d5d4a|A-BO|2026-11-18 22:06:26 +0800|luci: Add MASQUE URI import/export
+4cca0dc9|A-BO|2026-11-17 22:46:40 +0800|luci: explicitly specify IPv6 family for nftables TPROXY rules
+de002401|A-BO|2026-11-17 19:41:51 +0800|luci: reset src_valid_mark for TPROXY compatibility
+26aabe78|A-BO|2026-11-16 21:37:48 +0800|luci: prevent duplicate node references during subscription updates
+dc199849|A-BO|2026-11-15 19:47:45 +0800|luci: show a cross for inactive HTTP ports in SOCKS settings
+f88be2d1|A-BO|2026-11-15 19:03:33 +0800|luci: improve responsive layouts and node selector theming
+e399ebbd|A-BO|2026-11-15 09:53:57 +0800|luci: prevent port collisions during URL test startup
+aada0ff4|A-BO|2026-11-12 23:58:00 +0800|luci: add proxy warm-up before node latency tests
+44e9a029|A-BO|2026-11-11 23:46:16 +0800|luci: fix group dropdown text alignment in some themes
+b673df3a|FunnyFly|2026-11-11 22:52:54 +0800|luci: make current node highlight follow theme accent (#4515)
+
+</details>
