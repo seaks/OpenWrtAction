@@ -47,7 +47,7 @@ echo "## 更新记录" >>release.txt
 echo "">>release.txt
 
 # 清理 git_log 目录中的非 log 文件
-find git_log -type f ! -name 'log' -exec rm {} +
+find git_log -type f ! -name 'log' ! -name '*.log' -exec rm {} +
 mkdir -p git_repositories
 
 for git_folder in "${git_folders[@]}"; do
