@@ -1,0 +1,25 @@
+<details> <summary> <b>telephony 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/openwrt/telephony/compare/06feffc2c154993f555b43756ef7db6dd7e58225...c58ec5a6703966dcccb53d0919698c8aba3a9ef5)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+06feffc|Daniel Danzberger|Tue Oct 27 17:22:43 2026 +0100|baresip-apps: update to release 4.9.0
+63b108f|Daniel Danzberger|Tue Oct 27 17:22:21 2026 +0100|baresip: update to release 4.9.0
+47ead66|Daniel Danzberger|Tue Oct 27 17:18:03 2026 +0100|re: update to release 4.9.0
+dce317c|Daniel Golle|Sat Sep 26 21:40:53 2026 +0100|baresip: depend on audio-support for the gst plugin
+5fddc90|Daniel Golle|Thu Sep 10 13:07:08 2026 +0100|signalwire-client-c: drop libatomic dependency
+41dabb3|Daniel Golle|Thu Sep 10 13:07:08 2026 +0100|rtpproxy: use ATOMIC64_DEPENDS
+20c8a19|Daniel Golle|Thu Sep 10 13:07:08 2026 +0100|libks: drop libatomic dependency
+3597e9f|Josef Schlehofer|Tue Nov 3 10:03:23 2026 +0100|libsrtp: link with --as-needed to drop libatomic
+9bcb6d7|Roman Azarenko|Wed May 27 13:45:44 2026 +0200|pjproject: update CPE ID
+62c7ac1|Roman Azarenko|Wed May 27 12:34:38 2026 +0200|asterisk: update CPE ID
+436748e|Robert Högberg|Thu May 7 12:52:01 2026 +0200|yate: convert init script to procd
+c58ec5a|Roman Azarenko|Wed May 27 13:45:44 2026 +0200|pjproject: update CPE ID
+bcd9b44|Roman Azarenko|Wed May 27 12:34:38 2026 +0200|asterisk: update CPE ID
+8695daf|Julius Bairaktaris|Tue Oct 27 09:43:51 2026 +0100|rtpengine: fix kernel module build on Linux 6.15+
+67281df|Sander van Deijck|Sun Oct 18 02:32:03 2026 +0200|oslec: drop kernel 6.12 condition
+
+
+</details>

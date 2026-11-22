@@ -8,3 +8,12 @@ SHA|Author|Date|Message
 8134e2f|zxlhhyccc|Sat Nov 21 14:38:02 2026 +0800|luci-app-ssr-plus: add IDN domain handling in gfw2ipset
 260ff84|zxlhhyccc|Sat Nov 21 14:34:03 2026 +0800|luci-app-ssr-plus: fix Makefile dependency drift
 </details>
+<details> <summary> <b>helloworld 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/fw876/helloworld/compare/8134e2fff2b49b5f4308d295d2b2a987ca7207ec...e2cfe66d6914b986ecd1c4f86327a68f2af39c7c)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+e2cfe66|zxlhhyccc|Sun Nov 22 14:50:49 2026 +0800|luci-app-ssr-plus: fix component page dispatch
+</details>

@@ -1,0 +1,25 @@
+<details> <summary> <b>routing 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/openwrt/routing/compare/ea8633da9c461a9bdc62a0323439d31180762e03...625f9d8446807708bab4eef26cdc44692164818a)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+625f9d8|Simon Wunderlich|Fri Nov 6 18:14:51 2026 +0100|Merge pull request #1209 from ecsv/batadv-for-25.12
+27ce791|Sven Eckelmann|Fri Nov 6 17:39:49 2026 +0100|batman-adv: merge bugfixes from 2026.4
+ea8633d|Christian Marangi|Sun Oct 25 14:25:29 2026 +0100|batmand: add version test validation
+f57217d|Josef Schlehofer|Thu Aug 6 11:32:03 2026 +0200|batmand: fix build with GCC 14
+48c8080|Rob White|Tue Oct 13 22:47:38 2026 +0100|mesh11sd: update to version 7.3.1
+23912fb|Simon Polack|Sun Oct 11 14:04:40 2026 +0200|olsrd: ubus: forget an interface that is already gone
+b32747d|Rob White|Fri Oct 2 15:31:56 2026 +0100|mesh11sd: update to version 7.3.0
+cc66db2|Josef Schlehofer|Thu Aug 6 14:31:29 2026 +0200|babeld: initialize metric in the ubus add_filter handler
+77d03c4|Josef Schlehofer|Thu Aug 6 09:47:44 2026 +0200|babeld: simplify LDLIBS in MAKE_FLAGS
+97d1d3c|Josef Schlehofer|Tue Aug 11 13:10:50 2026 +0200|opennds: use the upstream spelling in the URL
+498d4f4|Josef Schlehofer|Tue Aug 11 13:10:50 2026 +0200|nodogsplash: fix config generation in the init script
+6e27196|Josef Schlehofer|Tue Aug 11 13:10:27 2026 +0200|mesh11sd: fix slow response to the informational options
+83f2caa|Josef Schlehofer|Thu Aug 6 09:33:10 2026 +0200|cjdns: add test-version.sh for CI runtime tests
+b9f2478|Josef Schlehofer|Thu Aug 6 09:59:21 2026 +0200|cjdns: mark as broken on riscv64
+bf071b7|Josef Schlehofer|Thu Aug 6 09:32:36 2026 +0200|cjdns: fix version reporting of binaries
+
+
+</details>

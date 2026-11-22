@@ -12,3 +12,15 @@ b7d8cd5|anothaDev|Sat Nov 21 09:38:59 2026 +0100|Release manifest for v1.1.0 (#1
 8b413e0|anothaDev|Sat Nov 21 09:26:00 2026 +0100|Release 1.1.0: other access points, search, WireGuard and Ports tiles, daily update check (#147)
 7c100d5|anothaDev|Sat Nov 21 09:18:56 2026 +0100|1.1: other access points, search, WireGuard and Ports tiles, daily update check (#146)
 </details>
+<details> <summary> <b>luci-theme-vantage 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/anothaDev/luci-theme-vantage/compare/8729104405b85d6c43347233d1cce15c2ed8d750...d9721507de0f87c14be000fec319d08af94cbdb9)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+d972150|Eldhose|Sun Nov 22 14:07:39 2026 +0530|Network path: "+n more" opens the rest of a node's clients (#154)
+4e871a4|Eldhose|Sun Nov 22 14:01:10 2026 +0530|Other access points: wired hosts behind one count in its branch, not the router's Wired (#153)
+287b5b0|Eldhose|Sun Nov 22 13:52:19 2026 +0530|Paired access points: carry each station's Wi-Fi standard and width (#155)
+a07820e|anothaDev|Sun Nov 22 08:17:54 2026 +0100|After 1.1.1: #134, a wired device behind an access point, feed deploy retry, versioning rule (#152)
+</details>

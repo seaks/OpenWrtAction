@@ -1,0 +1,25 @@
+<details> <summary> <b>luci 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/immortalwrt/luci/compare/8724b54de3a760294aedeb10a29ffba7e44cca2f...476b5257e3aa8274a727d648ba06c4ed284c159b)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+476b5257e3|Tianling Shen|Wed Nov 18 15:39:29 2026 +0800|Merge Official Source
+8ca5c25240|Aethersailor|Tue Nov 17 17:27:13 2026 +0800|luci-theme-argon: bump to 3.1.4
+8724b54de3|Tianling Shen|Wed Nov 18 15:37:23 2026 +0800|Merge Official Source
+cc975fd147|David Härdeman|Thu Nov 12 14:37:30 2026 +0000|luci-lua-runtime: get odhcpd leases via ubus
+a6adca3c8f|Aethersailor|Tue Nov 17 17:27:13 2026 +0800|luci-theme-argon: bump to 3.1.4
+57126beca6|Dirk Brenken|Mon Nov 16 22:05:45 2026 +0100|luci-app-travelmate: sync with base package 3.1.0
+5331286252|Josef Schlehofer|Mon Sep 28 09:15:27 2026 +0200|luci-app-librespeed: offer a weekly interval
+0fba8c9da4|Josef Schlehofer|Thu Sep 24 08:26:25 2026 +0200|luci-app-librespeed: test and schedule per interface
+45d88f61ff|Josef Schlehofer|Thu Sep 24 08:51:03 2026 +0200|luci-app-librespeed: order history by time
+2587ea8d53|Hosted Weblate|Mon Nov 16 17:25:38 2026 +0100|Translated using Weblate (Korean)
+f2135d68d8|tokisaki galaxy|Tue Nov 10 18:46:30 2026 +0800|luci-app-tailscale-community: sync with the package repo
+308411fa5b|David Härdeman|Wed Nov 11 22:05:34 2026 +0000|rpcd-mod-luci: bump version
+ab13720f6e|David Härdeman|Wed Nov 11 22:05:22 2026 +0000|rpcd-mod-luci: escape unsafe characters in lease hostnames
+f6eea3082e|David Härdeman|Wed Nov 11 22:05:22 2026 +0000|rpcd-mod-luci: get odhcpd leases via ubus
+68b5cbdb95|David Härdeman|Wed Nov 11 22:02:39 2026 +0000|rpcd-mod-luci: don't call back when invoke_ubus() fails
+
+
+</details>

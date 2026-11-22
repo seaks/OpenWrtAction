@@ -1,0 +1,25 @@
+<details> <summary> <b>small 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/kenzok8/small/compare/0838d14f15526bf9a0929af28de668a911dbdb94...ecc2c0289bed7619308b406b7c76a6c9acdbb438)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+ecc2c028|action|Sun Nov 22 05:14:22 2026 +0800|💤 v2ray-geodata: sync upstream
+2116e7dd|action|Sun Nov 22 05:14:22 2026 +0800|💤 trojan-plus: sync upstream
+2d0b2bcd|action|Sat Nov 21 23:40:50 2026 +0800|🍓 trojan-plus: update to 10.0.7
+10d1597f|action|Sat Nov 21 23:40:50 2026 +0800|🍓 trojan: update to 1.17.3
+4e7a5172|action|Sat Nov 21 23:40:50 2026 +0800|🍓 ssocks: update to 0.0.17
+0930430c|action|Sat Nov 21 23:40:50 2026 +0800|🍓 simple-obfs: update to 0.0.12
+2d4aa1fd|action|Sat Nov 21 23:40:50 2026 +0800|🍓 shadowsocksr-libev: update to 2.5.11
+7421bf3f|action|Sat Nov 21 21:47:23 2026 +0800|🎈 v2ray-geodata: sync upstream
+532489d7|action|Sat Nov 21 21:47:23 2026 +0800|🎈 v2dat: update to 0.1.6
+ed8617ef|action|Sat Nov 21 21:47:23 2026 +0800|🎈 trojan-go: update to 0.10.14
+63254786|action|Sat Nov 21 21:47:23 2026 +0800|🎈 tcping: update to 0.6
+ef5b358f|action|Sat Nov 21 21:47:22 2026 +0800|🎈 redsocks2: update to 0.73.2
+9cf56de3|action|Sat Nov 21 21:47:22 2026 +0800|🎈 pdnsd-alt: update to 1.3.3
+95590f45|action|Sat Nov 21 21:47:22 2026 +0800|🎈 luci-app-ssr-plus: sync upstream
+b78bb278|action|Sat Nov 21 21:47:22 2026 +0800|🎈 dns2socks: update to 2.3
+
+
+</details>
