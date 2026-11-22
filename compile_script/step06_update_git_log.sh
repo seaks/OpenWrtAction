@@ -4,6 +4,9 @@ release_tag=$1
 git_folders=( immortalwrt_master immortalwrt_snapshot  feeds custompackages)
 
 cd $GITHUB_WORKSPACE
+# ========= 新增全局去重数组 =========
+declare -A seen_title=()
+# ====================================
 
 # Ensure the log file ends with a newline before appending new entries.
 # This prevents two repos from being concatenated into one line.
@@ -79,6 +82,14 @@ for git_folder in "${git_folders[@]}"; do
         OUTPUT_FILE="${OUTPUT_FILE%.git}"  # 移除.git后缀
         TITLE_MESSAGE="${OUTPUT_FILE} 更新日志"
 
+        # ========= 去重判断：已经渲染过就跳过 =========
+        if [[ -n "${seen_title[$OUTPUT_FILE]}" ]]; then
+            echo "   ⏭️ 跳过重复仓库：$OUTPUT_FILE"
+            continue
+        fi
+        seen_title[$OUTPUT_FILE]=1
+        # =============================================
+
         # 克隆仓库
         if [ -n "$BRANCH" ]; then
             git clone "$REPO_URL" --filter=blob:none --branch "$BRANCH" "git_repositories/$git_folder/$OUTPUT_FILE"
@@ -152,10 +163,7 @@ for git_folder in "${git_folders[@]}"; do
                 echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "SHA|Author|Date|Message" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "-|-|-|-" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-                git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | head -n 15 >>"git_log/$git_folder/$OUTPUT_FILE.log"
-                if [ $(git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | wc -l) -gt 15 ]; then 
-                    echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-                fi
+                git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty="%h|%an|%ad|%s" --date=iso -15 >>"git_log/$git_folder/$OUTPUT_FILE.log"
             fi
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "</details>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
