@@ -1,9 +1,0 @@
-<details> <summary> <b>openwrt-passwall-packages 更新日志 :rocket: </b> </summary>
-
-#### [:mega: 更新日志. ](https://github.com/Openwrt-Passwall/openwrt-passwall-packages/compare/a880c9046f8bd5d2d4f1fb6b8f2e70968c463322...65ae3f5ec70c9613ae3ec41ee6e9baecb1828ff9)  
-:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
-
-SHA|Author|Date|Message
--|-|-|-
-65ae3f5|David Mandy|Sun Nov 22 18:47:05 2026 +0800|smartdns-webui: update to 6a64c5b (#783)
-</details>
