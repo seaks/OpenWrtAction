@@ -84,10 +84,10 @@ inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
 
 # 2. 替换 golang 为 sbwml 27.x
 #    ⚠️ master 分支若编译报 golang-package.mk 相关错误，先注释掉这段试一次
-echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
-rm -rf feeds/packages/lang/golang
-git clone --depth 1 https://github.com/sbwml/packages_lang_golang -b 27.x feeds/packages/lang/golang
-echo "✅ golang 替换完成"
+# echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
+# rm -rf feeds/packages/lang/golang
+# git clone --depth 1 https://github.com/sbwml/packages_lang_golang -b 27.x feeds/packages/lang/golang
+# echo "✅ golang 替换完成"
 
 # inject_feed "https://github.com/openwrt/luci.git" "feeds/luci/modules" \
 #     "modules/luci-mod-dashboard"
