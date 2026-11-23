@@ -50,7 +50,7 @@ echo "## 更新记录" >>release.txt
 echo "">>release.txt
 
 # 清理 git_log 目录中的非 log 文件
-find git_log -type f ! -name 'log' ! -name '*.log' -exec rm {} +
+find git_log -type f ! -name 'log' -exec rm {} +
 mkdir -p git_repositories
 
 for git_folder in "${git_folders[@]}"; do
@@ -59,12 +59,12 @@ for git_folder in "${git_folders[@]}"; do
 
     if [[ "$git_folder" == "feeds" ]]; then
         echo "">>release.txt
-        echo "### FEEDS 源更新记录" >>release.txt
+        echo "### FEEDS 源更新日志" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "custompackages" ]]; then
         echo "">>release.txt
-        echo "### 软件包更新记录" >>release.txt
+        echo "### 软件包更新日志" >>release.txt
         echo "">>release.txt
     fi
     if [[ "$git_folder" == "immortalwrt_master" || "$git_folder" == "immortalwrt_snapshot" ]]; then
@@ -82,13 +82,13 @@ for git_folder in "${git_folders[@]}"; do
         OUTPUT_FILE="${OUTPUT_FILE%.git}"  # 移除.git后缀
         TITLE_MESSAGE="${OUTPUT_FILE} 更新日志"
 
-        # ========= 去重判断：已经渲染过就跳过 =========
-        if [[ -n "${seen_title[$OUTPUT_FILE]}" ]]; then
-            echo "   ⏭️ 跳过重复仓库：$OUTPUT_FILE"
+        # ----------------【新增兜底去重】----------------
+        if [[ -n "${seen_repo[$OUTPUT_FILE]}" ]]; then
+            echo "⏭️ Skip duplicate repo: $OUTPUT_FILE"
             continue
         fi
-        seen_title[$OUTPUT_FILE]=1
-        # =============================================
+        seen_repo["$OUTPUT_FILE"]=1
+        # ------------------------------------------------
 
         # 克隆仓库
         if [ -n "$BRANCH" ]; then
@@ -163,7 +163,10 @@ for git_folder in "${git_folders[@]}"; do
                 echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "SHA|Author|Date|Message" >>"git_log/$git_folder/$OUTPUT_FILE.log"
                 echo "-|-|-|-" >>"git_log/$git_folder/$OUTPUT_FILE.log"
-                git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty="%h|%an|%ad|%s" --date=iso -15 >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | head -n 15 >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                if [ $(git -C "git_repositories/$git_folder/$OUTPUT_FILE" log --pretty=format:"%h|%an|%ad|%s" "$SHA_Begin...$SHA_End" | wc -l) -gt 15 ]; then
+                    echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
+                fi
             fi
             echo "" >>"git_log/$git_folder/$OUTPUT_FILE.log"
             echo "</details>" >>"git_log/$git_folder/$OUTPUT_FILE.log"
@@ -191,7 +194,7 @@ for git_folder in "${git_folders[@]}"; do
         echo ""
     done
     if [ "$UPDATE_COUNT" -eq 0 ]; then
-        echo "当前已是最新...... :zzz:">>release.txt
+        echo "当前没有更新...... :zzz:">>release.txt
     fi
 done
 
