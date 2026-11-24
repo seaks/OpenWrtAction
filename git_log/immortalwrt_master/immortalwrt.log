@@ -1,0 +1,10 @@
+<details> <summary> <b>immortalwrt 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志. ](https://github.com/immortalwrt/immortalwrt/compare/6003f6b8c3278a27712f4fdaaa8d1e5faa2b1f54...73bc086a62f951d96e5d7404f04c4d73e141cad2)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志.  
+
+SHA|Author|Date|Message
+-|-|-|-
+73bc086a62|Tianling Shen|Tue Nov 24 14:29:16 2026 +0800|kernel: bluetooth: add Realtek HCI UART BT support
+dcdc3834fb|Tianling Shen|Tue Nov 24 11:47:49 2026 +0800|rockchip: backport support for Hynetek HUSB311 Type-C controller
+</details>
