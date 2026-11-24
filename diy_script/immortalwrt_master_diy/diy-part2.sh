@@ -93,6 +93,12 @@ inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
 #     "modules/luci-mod-dashboard"
 
 echo "🎉 移植完毕"
+
+# ========== 【新增：修复 GitHub Actions rust host 编译报错】 ==========
+echo "🔧 修复rust llvm下载开关：llvm.download-ci-llvm=false"
+sed -i 's/--set=llvm.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' feeds/packages/lang/rust/Makefile
+# =====================================================================
+
 #----------------------------------------------------------end 移植包--------------------------------------------------------
 
 
