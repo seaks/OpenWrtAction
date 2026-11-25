@@ -19,8 +19,8 @@ source "$PARENT_DIR/custom_feeds_and_packages.sh"
 cp -a feeds.conf.default feeds.conf.default.bak
 
 # 删除 feeds.conf.default 中的注释行（以 # 开头）
-sed -i '/^#/d' feeds.conf.default
-sed -i -e 's|git.openwrt.org/feed|github.com/openwrt|g' -e 's|git.openwrt.org/project|github.com/openwrt|g' feeds.conf.default
+# sed -i '/^#/d' feeds.conf.default
+# sed -i -e 's|git.openwrt.org/feed|github.com/openwrt|g' -e 's|git.openwrt.org/project|github.com/openwrt|g' feeds.conf.default
 
 
 # 创建临时文件
