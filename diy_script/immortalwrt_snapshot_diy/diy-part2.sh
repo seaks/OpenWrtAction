@@ -100,10 +100,10 @@ inject_feed "https://github.com/immortalwrt/packages.git" "feeds/packages/lang" 
     "lang/rust"
 
 # 2. 替换 golang 为 sbwml 27.x
-echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
-rm -rf feeds/packages/lang/golang
-git clone --depth 1 -b 27.x https://github.com/sbwml/packages_lang_golang feeds/packages/lang/golang
-echo "✅ golang 替换完成"
+# echo ">>> 替换 golang 为 sbwml/packages_lang_golang 27.x ..."
+# rm -rf feeds/packages/lang/golang
+# git clone --depth 1 -b 27.x https://github.com/sbwml/packages_lang_golang feeds/packages/lang/golang
+# echo "✅ golang 替换完成"
 
 # inject_feed "https://github.com/openwrt/luci.git" "feeds/luci/modules" \
 #     "modules/luci-mod-dashboard"
