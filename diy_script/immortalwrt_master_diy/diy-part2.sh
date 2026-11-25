@@ -9,6 +9,12 @@
 # File name: diy-part2.sh
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
+# 执行时机：./scripts/feeds update -a 之后、./scripts/feeds install -a 之前
+#   ⚠️ 这个顺序是 golang / rust 注入能生效的前提：
+#      feeds install -a 会把 feeds/ 下的新内容重新软链到 package/feeds/
+#
+
+set -e
 
 # Add patches
 if [ "$GITHUB_ACTIONS" = "true" ] && [ -n "$GITHUB_RUN_ID" ]; then
@@ -32,18 +38,23 @@ inject_feed() {
 
     echo "🚀 正在从 $repo_url 极速拉取至 $feed_dir ..."
 
-    # 稀疏检出，只拉需要的目录
-    git clone --filter=blob:none --sparse --depth=1 "$repo_url" temp_repo > /dev/null 2>&1
-    # 子 shell 隔离 cd，失败也不污染后续路径
+    # ⚠️ 不要用 --filter=blob:none：
+    #    blobless 克隆下 git log -- <path> 要联网拉 blob，大概率返回空，
+    #    导致所有包共用 fallback_time → mtime 失真 → Checkpoint 每次都判定
+    #    "Base 有变化"，5GB 缓存白推
+    #    浅克隆的 blob 都在本地，git log 是纯本地操作，时间戳准确
+    git clone --sparse --depth=1 "$repo_url" temp_repo > /dev/null 2>&1
+
+    # 稀疏检出，只拉需要的目录；子 shell 隔离 cd，失败也不污染后续路径
     (cd temp_repo && git sparse-checkout set "${paths[@]}" > /dev/null 2>&1)
 
-    # 提取上游最新的 Commit 时间戳（兜底用）
+    # 上游最新 Commit 时间戳（仅作兜底）
     local fallback_time
     fallback_time=$(cd temp_repo && git log -1 --format=%cd --date=unix 2>/dev/null || date +%s)
 
     for p in "${paths[@]}"; do
         if [ -d "temp_repo/$p" ]; then
-            local pkg_name dest_path feed_name symlink_path file_time
+            local pkg_name dest_path symlink_path file_time
             pkg_name=$(basename "$p")
             dest_path="$feed_dir/$pkg_name"
 
@@ -58,14 +69,16 @@ inject_feed() {
             rm -rf "$dest_path"
             cp -r "temp_repo/$p" "$dest_path"
 
-            # 3. 提取真实时间戳，失败则用兜底时间，欺骗编译缓存
+            # 3. 提取真实时间戳，失败则用兜底，欺骗编译缓存
             file_time=$(cd temp_repo && git log -1 --format=%cd --date=unix -- "$p" 2>/dev/null)
             if [ -z "$file_time" ]; then
                 file_time=$fallback_time
+                echo "  ↳ $p 取不到独立时间戳，使用兜底值"
             fi
-            find "$dest_path" -exec touch -m -d @"$file_time" {} +
+            # 只 touch 文件，不动目录：目录 mtime 变化会放大 make 的重扫范围
+            find "$dest_path" -type f -exec touch -m -d @"$file_time" {} +
 
-            echo "✅ 已注入并伪装时间戳: $pkg_name"
+            echo "✅ 已注入并伪装时间戳: $pkg_name (@$file_time)"
         else
             echo "⚠️ 路径不存在，跳过: $p"
         fi
@@ -79,8 +92,8 @@ inject_feed() {
 # =================================================================
 
 # 1. 注入 rust
-# inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
-#   "lang/rust"
+inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
+    "lang/rust"
 
 # 2. 替换 golang 为 sbwml 27.x
 #    ⚠️ master 分支若编译报 golang-package.mk 相关错误，先注释掉这段试一次
@@ -93,12 +106,6 @@ inject_feed() {
 #     "modules/luci-mod-dashboard"
 
 echo "🎉 移植完毕"
-
-# ========== 【新增：修复 GitHub Actions rust host 编译报错】 ==========
-echo "🔧 修复rust llvm下载开关：llvm.download-ci-llvm=false"
-sed -i 's/--set=llvm.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' feeds/packages/lang/rust/Makefile
-# =====================================================================
-
 #----------------------------------------------------------end 移植包--------------------------------------------------------
 
 
@@ -165,7 +172,6 @@ else
         echo ">>> 环境变量 GHFU_GITHUB_TOKEN 为空，不注入"
     fi
 fi
-
 
 echo "DIY2 is complete!"
 #------------------------------------------------end 修改脚本-------------------------------------------------------
