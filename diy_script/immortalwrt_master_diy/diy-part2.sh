@@ -114,6 +114,31 @@ echo "🎉 移植完毕"
 # Modify default IP
 sed -i 's/192.168.1.1/192.168.101.1/g' package/base-files/files/bin/config_generate
 
+# ===== 修复 netspeedtest 依赖 =====
+# 问题：sirpdboy/netspeedtest 的 Makefile 按主线 OpenWrt 写依赖，声明了
+#       python3-email / python3-pkg-resources；但 ImmortalWrt 没有拆分这两个包，
+#       apk 装 rootfs 时会报 "no such package"，导致 package/install Error 4。
+# 处理：从 LUCI_DEPENDS 里删掉这两项（这两个模块已包含在 python3-light 基础包中）。
+# 位置：必须在 feeds install -a 之前改，这样生成的 .packageinfo 才是正确的。
+NETSPEEDTEST_MK="feeds/netspeedtest/luci-app-netspeedtest/Makefile"
+if [ -f "$NETSPEEDTEST_MK" ]; then
+    sed -i \
+        -e 's/ +python3-pkg-resources//g' \
+        -e 's/ +python3-email//g' \
+        -e 's/^[[:space:]]*python3-pkg-resources[[:space:]]*\\\{0,1\}//g' \
+        -e 's/^[[:space:]]*python3-email[[:space:]]*\\\{0,1\}//g' \
+        "$NETSPEEDTEST_MK"
+    echo "✅ netspeedtest 依赖已修正"
+    if grep -q "python3-email\|python3-pkg-resources" "$NETSPEEDTEST_MK"; then
+        echo "⚠️ 仍有残留，请检查：$NETSPEEDTEST_MK"
+        grep -n "python3-email\|python3-pkg-resources" "$NETSPEEDTEST_MK"
+    else
+        echo "   ↳ 已无 python3-email / python3-pkg-resources"
+    fi
+else
+    echo "⚠️ 未找到 $NETSPEEDTEST_MK，跳过（feed 可能改名或尚未拉取）"
+fi
+
 # inject download package（目录不存在或为空都不中断）
 mkdir -p dl
 if [ -d "$PATCHES_SRC_DIR/library" ]; then
