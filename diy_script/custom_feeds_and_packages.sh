@@ -4,17 +4,17 @@
 export repos=(
   "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main"
   "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git;main"
-  # "src-git tower https://github.com/kenzok8/openwrt-tower.git;main"
-  # "src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git;main"
-  # "src-git OpenClash https://github.com/vernesong/OpenClash;master"
   "src-git ghfu https://github.com/seaks/openwrt-ghfu.git;main"
-  # "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
   "src-git bandix https://github.com/timsaya/luci-app-bandix.git;main"
   "src-git bandi https://github.com/timsaya/openwrt-bandix.git"
   "src-git netspeedtest https://github.com/sirpdboy/netspeedtest.git"
   "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git"
+  # "src-git tower https://github.com/kenzok8/openwrt-tower.git;main"
+  # "src-git passwall2 https://github.com/Openwrt-Passwall/openwrt-passwall2.git;main"
+  # "src-git OpenClash https://github.com/vernesong/OpenClash;master"
   # "src-git helloworld https://github.com/fw876/helloworld.git;dev"
   # "src-git small https://github.com/kenzok8/small"
+  # "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
 )
 
 # 自定义软件包列表
@@ -31,20 +31,20 @@ clone_custom_packages () {
     rm -rf ${path}
     mkdir -p ${path}
 
-    # 主题
-    git clone https://github.com/seaks/luci-theme-argon.git ${path}luci-theme-argon
-
     # ========== 官方教程方式：顶层package部署mosdns + geodata ==========
     rm -rf package/mosdns package/v2ray-geodata
     git clone --depth=1 https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
     # git clone --depth=1 https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
     # =================================================================
 
+        # 主题
+    git clone https://github.com/seaks/luci-theme-argon.git ${path}luci-theme-argon
+
     # 该主题 Makefile 使用相对路径 ../../luci.mk, 在 package/custom_packages 下无法找到, 改为 feeds 中的路径
     # sed -i 's#^include[[:blank:]]\+\.\./\.\./luci\.mk#include $(TOPDIR)/feeds/luci/luci.mk#' "${path}luci-theme-ctmodem/luci-theme-ctmodem/Makefile"
 
     # sed -i '/^[\t ]*PKG_VERSION:=/ s/\(PKG_VERSION:= *\)[^0-9.]*\([0-9.]*\)[^0-9.]*/\1\2/' "${path}luci-theme-alpha-reborn/Makefile"
-    sed -i '/^[\t ]*PKG_VERSION:=/ s/\(PKG_VERSION:= *\)[^0-9.]*\([0-9.]*\)[^0-9.]*/\1\2/' "${path}luci-theme-alpha/Makefile"
+    # sed -i '/^[\t ]*PKG_VERSION:=/ s/\(PKG_VERSION:= *\)[^0-9.]*\([0-9.]*\)[^0-9.]*/\1\2/' "${path}luci-theme-alpha/Makefile"
 
     
     local target="luci.main.mediaurlbase="
@@ -78,14 +78,14 @@ cat << "EOF" > files/etc/uci-defaults/zz-set-default-theme
 # 强制覆写节点，不判断任何条件，设置默认主题
 
 # 设置默认主题为 Argon
-# uci set luci.themes.Argon=/luci-static/argon
-# uci set luci.main.mediaurlbase=/luci-static/argon
-# uci commit luci
+ uci set luci.themes.Argon=/luci-static/argon
+ uci set luci.main.mediaurlbase=/luci-static/argon
+ uci commit luci
 
 # 设置默认主题为 vantage
- uci set luci.themes.Vantage=/luci-static/vantage
- uci set luci.main.mediaurlbase=/luci-static/vantage
- uci commit luci
+ # uci set luci.themes.Vantage=/luci-static/vantage
+ # uci set luci.main.mediaurlbase=/luci-static/vantage
+ # uci commit luci
 
 exit 0
 EOF
