@@ -37,7 +37,7 @@ clone_custom_packages () {
     # git clone --depth=1 https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
     # =================================================================
 
-        # 主题
+ # 主题
     git clone https://github.com/seaks/luci-theme-argon.git ${path}luci-theme-argon
 
     # 该主题 Makefile 使用相对路径 ../../luci.mk, 在 package/custom_packages 下无法找到, 改为 feeds 中的路径
