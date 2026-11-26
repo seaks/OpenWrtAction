@@ -14,27 +14,24 @@
 #      feeds install -a 会把 feeds/ 下的新内容重新软链到 package/feeds/
 #
 # ============================================================================
-# 环境变量（本地、在线都可用）
+# 环境变量
 # ----------------------------------------------------------------------------
 #   TARGET_BRANCH    目标分支，默认自动探测（master / openwrt-25.12 ...）
-#   GO_VERSION       切到指定 Go 大版本，例如 GO_VERSION=1.27
-#                    留空 = 不动，沿用 ImmortalWrt 默认（25.12 为 1.26）
+#   GO_VERSION       切到指定 Go 大版本，例如 GO_VERSION=1.27；留空=不动
 #   RUST_INJECT      1=注入 rust（默认），0=用 ImmortalWrt 自带
 #   RUST_REPO        rust 源，默认随分支走（稳定分支用 immortalwrt）
 #   GOLANG_REPO      golang 源，留空=不替换（默认，推荐）
-#   GOLANG_BRANCH    配合 GOLANG_REPO 使用，例如 27.x
+#   GOLANG_BRANCH    配合 GOLANG_REPO，例如 27.x
 #   PATCHES_SRC_DIR  OpenWrtAction 仓库路径，默认 $HOME/OpenWrtAction
-#   GOLANG_LINK_MODE dl 里 golang 源码的处理方式：copy（默认）/ symlink / skip
-#   GHFU_GITHUB_TOKEN ghfu token，为空则保留占位符
+#   LIBRARY_MODE     library 处理方式：copy（默认）/ symlink / skip
+#   GHFU_GITHUB_TOKEN ghfu token，为空保留占位符
 #
 # 常用场景：
-#   在线编 25.12，全部用官方底座：
-#     无需任何环境变量，直接跑
-#   在线编 25.12，Go 换 1.27：
-#     GO_VERSION=1.27 ./diy_script/immortalwrt_part2.sh
-#   本地编 master，沿用 sbwml 27.x：
-#     GOLANG_REPO=https://github.com/sbwml/packages_lang_golang GOLANG_BRANCH=27.x \
-#     ./diy_script/immortalwrt_part2.sh
+#   在线编 25.12，官方底座（最稳）：不设任何变量
+#   在线编 25.12，Go 换 1.27：      GO_VERSION=1.27
+#   本地编 master，用 sbwml 27.x：
+#     GOLANG_REPO=https://github.com/sbwml/packages_lang_golang \
+#     GOLANG_BRANCH=27.x ./diy_script/immortalwrt_part2.sh
 # ============================================================================
 
 set -e
@@ -46,10 +43,9 @@ set -o pipefail
 log()  { echo ">>> $*"; }
 ok()   { echo "✅ $*"; }
 warn() { echo "⚠️  $*"; }
-die()  { echo "❌ $*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
-# 定位 OpenWrtAction 仓库（补丁、dl 缓存、library 所在的那份）
+# 定位 OpenWrtAction 仓库
 # ---------------------------------------------------------------------------
 if [ "$GITHUB_ACTIONS" = "true" ] && [ -n "$GITHUB_RUN_ID" ] && [ -n "$GITHUB_WORKFLOW" ]; then
     PATCHES_SRC_DIR="${PATCHES_SRC_DIR:-$GITHUB_WORKSPACE}"
@@ -66,7 +62,7 @@ if [ -z "${TARGET_BRANCH:-}" ]; then
     if [ -d .git ] && git rev-parse --git-dir >/dev/null 2>&1; then
         TARGET_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
     fi
-    [ -z "$TARGET_BRANCH" ] || [ "$TARGET_BRANCH" = "HEAD" ] && TARGET_BRANCH="master"
+    case "${TARGET_BRANCH:-}" in ""|HEAD) TARGET_BRANCH="master" ;; esac
 fi
 log "目标分支：${TARGET_BRANCH:-unknown}"
 
@@ -83,14 +79,13 @@ rm -rf temp_repo temp_resp clone.log cp.err touch.err dl.err
 # ===========================================================================
 # 注入函数：从远端稀疏拉取指定目录，覆盖到 feeds 树
 #
-# 参数：
 #   $1  repo_url   远端仓库
 #   $2  feed_dir   feeds 下的目标目录，例如 feeds/packages/lang
 #   $3... paths    相对仓库根的完整路径，例如 lang/rust
 #
-# ⚠️ paths 必须写完整路径。早期版本用 shift 2 后再 cut -d'/' -f2 推 feed 名，
-#    会把 lang/ 这一级吃掉，清理的是 package/feeds/packages/rust 这种
-#    不存在的路径，真实软链残留下来和覆盖后的目录打架。
+# ⚠️ paths 必须写完整路径。早期版本用 shift 2 后 cut -d'/' -f2 推 feed 名，
+#    会把 lang/ 吃掉，清理的是 package/feeds/packages/rust 这种不存在的路径，
+#    真实软链残留下来和覆盖后的目录打架。
 # ===========================================================================
 inject_feed() {
     local repo_url="$1"
@@ -105,8 +100,7 @@ inject_feed() {
     # ⚠️ 不要用 --filter=blob:none：blobless 克隆下 git log -- <path> 要联网拉
     #    blob，大概率返回空 → 全部共用 fallback_time → mtime 失真 →
     #    Checkpoint 每次都判定 "Base 有变化"，缓存白推。
-    #    浅克隆 blob 都在本地，git log 纯本地，时间戳准确。
-    # ⚠️ 失败不中断：set -e 下 clone 失败会直接退出整个 job，
+    # ⚠️ 失败不中断：set -e 下 clone 失败会退出整个 job，
     #    后面的 feeds install / defconfig / 编译全都不执行。
     if ! git clone --sparse --depth=1 "$repo_url" temp_repo > clone.log 2>&1; then
         warn "clone 失败，跳过：$repo_url"
@@ -115,19 +109,18 @@ inject_feed() {
         return 0
     fi
 
-    # 稀疏检出；--no-cone 让 lang/rust 和 lang/python/* 两种写法都能用
+    # --no-cone：lang/rust 和 lang/python/* 两种写法都能用
     if ! (cd temp_repo && git sparse-checkout set --no-cone "${paths[@]}" >/dev/null 2>&1); then
         warn "sparse-checkout 失败，跳过：$repo_url"
         rm -rf temp_repo clone.log
         return 0
     fi
 
-    local fallback_time now_ts
+    local fallback_time
     fallback_time="$(cd temp_repo && git log -1 --format=%cd --date=unix 2>/dev/null || true)"
     fallback_time="${fallback_time:-$(date +%s)}"
-    now_ts="$(date +%s)"
 
-    local p pkg_name dest_path symlink_path feed_name sub_path file_time
+    local p pkg_name dest_path symlink_path feed_name sub_path file_time disp_time now_ts
     for p in "${paths[@]}"; do
         if [ ! -d "temp_repo/$p" ]; then
             warn "路径不存在，跳过：$p"
@@ -168,10 +161,11 @@ inject_feed() {
         # 3. 伪装时间戳：取该路径最后一次 commit 时间
         file_time="$(cd temp_repo && git log -1 --format=%cd --date=unix -- "$p" 2>/dev/null || true)"
         file_time="${file_time:-$fallback_time}"
-        # ⚠️ 上游 commit 时间可能晚于当前时间（仓库时间线靠前），
-        #    未来时间会让 make 每次都判定需要重编，这里钳到当前时间
+        # 循环内实时取当前时间：Actions runner 时钟可能与上游 commit 时间有偏差
+        now_ts="$(date +%s)"
+        disp_time="$(date -u -d "@$file_time" 2>/dev/null || echo '未知时间')"
         if [ "$file_time" -gt "$now_ts" ] 2>/dev/null; then
-            log "  $p 时间戳 ($file_time) 晚于当前时间，钳制为 $now_ts"
+            log "  $p 上游时间戳 $file_time ($disp_time) 晚于当前时间，钳制为 $now_ts"
             file_time="$now_ts"
         fi
         # 只 touch 文件，不动目录：目录 mtime 变化会放大 make 的重扫范围
@@ -190,9 +184,12 @@ inject_feed() {
 # ===========================================================================
 # Go 版本切换
 #
-# 不写死 CONFIG_GO_VERSION_1_27 这种名字：不同 golang 包的 Config.in
-# 写法可能是 `config GO_VERSION` + string，也可能是 choice + GO_VERSION_1_27。
-# 这里让 scripts/config 自己按值去找符号，找不到就报警告不中断。
+# 不写死 CONFIG_GO_VERSION_1_27：不同 golang 包的 Config.in 写法可能是
+# `config GO_VERSION` + string，也可能是 choice + GO_VERSION_1_27。
+# 这里让 scripts/config 自己按值找符号，找不到只警告不中断。
+#
+# ⚠️ 所有 grep 都带 || true：pipefail 下 grep 无匹配会返回 1，
+#    会把整个脚本带崩（上一版就是这么挂在收尾的）。
 # ===========================================================================
 go_select() {
     local want="$1"
@@ -203,10 +200,9 @@ go_select() {
         return 0
     fi
 
-    local supported
-    supported="$(sed -n 's/^GO_VERSIONS[[:space:]]*:?*=\(.*\)$/\1/p' "$golang_dir/golang-values.mk" 2>/dev/null \
-                 | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+$' || true)"
-
+    local supported raw
+    raw="$(sed -n 's/^GO_VERSIONS[[:space:]]*:*=\(.*\)$/\1/p' "$golang_dir/golang-values.mk" 2>/dev/null || true)"
+    supported="$(printf '%s' "$raw" | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+$' || true)"
     log "该分支支持的 Go 版本：$(printf '%s' "$supported" | tr '\n' ' ')"
 
     if [ -n "$supported" ] && ! printf '%s\n' "$supported" | grep -qx "$want"; then
@@ -219,45 +215,42 @@ go_select() {
         return 0
     fi
 
-    # 找到值为 $want 的那个符号名
-    local sym
-    sym="$(scripts/config --symbols 2>/dev/null | tr ' ' '\n' \
-           | grep -E '^CONFIG_GO_VERSION' \
-           | while read -r s; do
-                 v="$(scripts/config --state "${s#CONFIG_}" 2>/dev/null || true)"
-                 [ "$v" = "$want" ] && printf '%s\n' "$s"
-             done | head -1)"
+    # 按值反查符号名（grep 无匹配时 || true 兜住）
+    local sym symbol_list
+    symbol_list="$(scripts/config --symbols 2>/dev/null | tr ' ' '\n' | grep -E '^CONFIG_GO_VERSION' || true)"
+
+    sym="$(printf '%s\n' "$symbol_list" | while read -r s; do
+              [ -z "$s" ] && continue
+              v="$(scripts/config --state "${s#CONFIG_}" 2>/dev/null || true)"
+              if [ "$v" = "$want" ]; then printf '%s\n' "$s"; fi
+          done | head -1 || true)"
 
     if [ -z "$sym" ]; then
-        # 兜底：choice 形式通常是 CONFIG_GO_VERSION_1_27
+        # 兜底：choice 形式通常叫 CONFIG_GO_VERSION_1_27
         sym="CONFIG_GO_VERSION_$(printf '%s' "$want" | tr '.' '_')"
-        if ! scripts/config --symbols 2>/dev/null | tr ' ' '\n' | grep -qx "$sym"; then
+        if ! printf '%s\n' "$symbol_list" | grep -qx "$sym"; then
             warn "未找到 Go $want 对应的配置符号，保持默认版本"
             return 0
         fi
     fi
 
     log "切换到 Go $want（符号：$sym）"
-    scripts/config --enable "${sym#CONFIG_}" 2>/dev/null \
-        || scripts/config --set-str GO_VERSION "$want" 2>/dev/null \
-        || { warn "切换失败，保持默认版本"; return 0; }
-
-    ok "Go 版本已设为 $want"
-    grep -E "^CONFIG_GO_VERSION" .config 2>/dev/null | head -5 || true
+    if scripts/config --enable "${sym#CONFIG_}" 2>/dev/null; then
+        ok "Go 版本已设为 $want"
+        grep -E "^CONFIG_GO_VERSION" .config 2>/dev/null | head -5 || true
+    else
+        warn "切换失败，保持默认版本"
+    fi
 }
 
 # ===========================================================================
-# 执行注入任务
-# ===========================================================================
-
-# ---------------------------------------------------------------------------
 # 1. rust
 #    ⚠️ 源必须和目标分支同源：
 #       - master   用 openwrt/packages（主线）或 immortalwrt/packages
 #       - 稳定分支 用 immortalwrt/packages；主线 rust 版本会漂，
 #                  还会和分支自带的 rust-bindgen 等配套件错开
-#    RUST_INJECT=0 可完全跳过，直接用 ImmortalWrt 自带的 rust。
-# ---------------------------------------------------------------------------
+#    RUST_INJECT=0 可跳过，直接用 ImmortalWrt 自带的 rust。
+# ===========================================================================
 RUST_INJECT="${RUST_INJECT:-1}"
 
 if [ "$RUST_INJECT" = "1" ]; then
@@ -275,17 +268,14 @@ else
     log "RUST_INJECT=0，跳过 rust 注入，使用 ImmortalWrt 自带版本"
 fi
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # 2. golang
 #    ⚠️ ImmortalWrt 25.12 的 lang/golang 已是新版结构：
 #       golang-bootstrap + golang-version.mk + golang1.26/golang1.27/...
-#       golang-values.mk 里的 GO_DEFAULT_VERSION 决定 golang/host 指向谁
+#       golang-values.mk 的 GO_DEFAULT_VERSION 决定 golang/host 指向谁
 #       （25.12 为 1.26），各 Go 包无需改依赖名。
 #    ⚠️ 所以稳定分支默认【不替换】，沿用官方配套版本最稳。
-#    要换源（比如 master 固定到某大版本）：
-#       GOLANG_REPO=https://github.com/sbwml/packages_lang_golang \
-#       GOLANG_BRANCH=27.x ./diy_script/immortalwrt_part2.sh
-# ---------------------------------------------------------------------------
+# ===========================================================================
 if [ -n "${GOLANG_REPO:-}" ]; then
     GOLANG_BRANCH="${GOLANG_BRANCH:-master}"
     log "替换 golang：$GOLANG_REPO（分支 $GOLANG_BRANCH）"
@@ -299,7 +289,8 @@ if [ -n "${GOLANG_REPO:-}" ]; then
         if ./scripts/feeds update -p packages && ./scripts/feeds install golang; then
             ok "已恢复官方 golang"
         else
-            die "golang 恢复失败，请手动执行：./scripts/feeds update -a && ./scripts/feeds install -a"
+            echo "❌ golang 恢复失败，请手动执行：./scripts/feeds update -a && ./scripts/feeds install -a" >&2
+            exit 1
         fi
     fi
 else
@@ -322,7 +313,7 @@ ok "移植完毕"
 
 # ---------------------------------------------------------------------------
 # Modify default IP
-# ⚠️ grep -c 无匹配时返回 1，set -e 下必须 || true 兜住；
+# ⚠️ grep -c 无匹配返回 1，set -e 下必须 || true 兜住；
 #    不能用 || echo 0，会多输出一行变成 "0\n0"
 # ---------------------------------------------------------------------------
 IP_FILE="package/base-files/files/bin/config_generate"
@@ -340,15 +331,12 @@ fi
 # ---------------------------------------------------------------------------
 # 修复 netspeedtest 依赖
 #
-# 问题：sirpdboy/netspeedtest 的 Makefile 按主线 OpenWrt 写依赖，声明了
-#       python3-email 与 python3-pkg-resources：
-#         - python3-email         主线在 lang/python/python3/files/python3-package-email.mk
-#         - python3-pkg-resources 主线在 lang/python/python-setuptools/Makefile
-#       ImmortalWrt 的 feeds/packages/lang/python 没拆这两个包，
-#       apk 装 rootfs 时报 "no such package"，package/install Error 4。
-# 处理：从 LUCI_DEPENDS 删掉这两项。email 随 python3-light 标准库一起装进设备，
-#       import email 不受影响；pkg_resources 只有脚本用到 setuptools 时才需要。
-# 位置：必须在 feeds install -a 之前改，这样 .packageinfo 才是正确的。
+# sirpdboy/netspeedtest 按主线 OpenWrt 写依赖，声明了 python3-email 与
+# python3-pkg-resources，但 ImmortalWrt 的 lang/python 没拆这两个包，
+# apk 装 rootfs 时报 "no such package" → package/install Error 4。
+# 处理：从 LUCI_DEPENDS 删掉。email 随 python3-light 标准库一起进设备，
+# import email 不受影响；pkg_resources 只在脚本用 setuptools 时才需要。
+# 位置：必须在 feeds install -a 之前改，.packageinfo 才是正确的。
 # ---------------------------------------------------------------------------
 NETSPEEDTEST_MK="feeds/netspeedtest/luci-app-netspeedtest/Makefile"
 if [ -f "$NETSPEEDTEST_MK" ]; then
@@ -373,8 +361,7 @@ fi
 
 # ---------------------------------------------------------------------------
 # inject download package
-# ⚠️ dl 可能是指向外部缓存的软链接，cp -r 会顺着链接把文件塞进链接目标，
-#    所以先判 -L；想省空间可以用 GOLANG_LINK_MODE=symlink
+# ⚠️ dl 可能是指向外部缓存的软链接，cp -r 会顺着链接塞进目标里，先判 -L
 # ---------------------------------------------------------------------------
 mkdir -p dl
 if [ -d "$PATCHES_SRC_DIR/library" ]; then
@@ -383,15 +370,15 @@ if [ -d "$PATCHES_SRC_DIR/library" ]; then
 
     if [ "${LIB_CNT:-0}" -gt 0 ]; then
         if [ -L "dl" ]; then
-            ok "dl 是软链接（$(readlink -f dl)），直接往里复制"
+            log "dl 是软链接 -> $(readlink -f dl)"
         fi
-        case "${GOLANG_LINK_MODE:-copy}" in
+        case "${LIBRARY_MODE:-copy}" in
             symlink)
                 ln -sfn "$(readlink -f "$PATCHES_SRC_DIR/library")" ./dl/library_link
                 ok "已软链接 library -> dl/library_link"
                 ;;
             skip)
-                log "GOLANG_LINK_MODE=skip，跳过 library 复制"
+                log "LIBRARY_MODE=skip，跳过 library 复制"
                 ;;
             *)
                 if cp -r "$PATCHES_SRC_DIR/library/." ./dl/ 2> dl.err; then
@@ -446,11 +433,11 @@ ok "已写入 files/etc/uci-defaults/99-custom-ssh-config"
 
 # --- End Modify SSH Configuration ---
 
-# ==========================================================================
+# ---------------------------------------------------------------------------
 # GHFU 插件 token 注入：perl 安全替换
 # 本地 / fork PR 场景没有 Secrets，token 为空时保留占位符，不注入
-# ==========================================================================
-GHFU_FILE="$(find . -path "*/luci-app-ghfu/*.lua" -exec grep -l '__GHFU_GITHUB_TOKEN__' {} + 2>/dev/null | head -n1)"
+# ---------------------------------------------------------------------------
+GHFU_FILE="$(find . -path "*/luci-app-ghfu/*.lua" -exec grep -l '__GHFU_GITHUB_TOKEN__' {} + 2>/dev/null | head -n1 || true)"
 
 if [ -n "$GHFU_FILE" ] && [ -n "${GHFU_GITHUB_TOKEN:-}" ]; then
     log "找到 ghfu 模板：$GHFU_FILE"
@@ -465,7 +452,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Go 版本切换（放在最后：golang 目录可能刚被替换过）
+# Go 版本切换（放最后：golang 目录可能刚被替换过）
 # ---------------------------------------------------------------------------
 if [ -n "${GO_VERSION:-}" ]; then
     go_select "$GO_VERSION"
@@ -477,18 +464,30 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 收尾检查：只报 feeds 子目录里的 .git
+# 收尾检查
 #   feeds/bandi/.git 这类是 src-git 拉下来自带的，属正常，不报
+#   ⚠️ grep 过滤后无结果会返回 1，pipefail 下会带崩脚本，
+#      所以先存进变量再判断，绝不能直接接进 while
 # ---------------------------------------------------------------------------
-find feeds -mindepth 2 -maxdepth 5 -name ".git" -type d 2>/dev/null \
-    | grep -vE "^feeds/[^/]+/\.git$" | head -10 | while read -r d; do
-    warn "feeds 子目录中残留 Git 目录（疑似 cp -r 污染）：$d"
-done
+GIT_LEFT="$(find feeds -mindepth 2 -maxdepth 5 -name ".git" -type d 2>/dev/null \
+            | grep -vE "^feeds/[^/]+/\.git$" || true)"
 
-# 关键目录自检
+if [ -n "$GIT_LEFT" ]; then
+    printf '%s\n' "$GIT_LEFT" | head -10 | while read -r d; do
+        warn "feeds 子目录中残留 Git 目录（疑似 cp -r 污染）：$d"
+    done
+else
+    log "feeds 子目录无 Git 残留"
+fi
+
+MISSING=0
 for d in feeds/packages/lang/rust feeds/packages/lang/golang feeds/luci/luci-base; do
-    [ -e "$d" ] || warn "关键目录缺失：$d"
+    if [ ! -e "$d" ]; then
+        warn "关键目录缺失：$d"
+        MISSING=1
+    fi
 done
+[ "$MISSING" -eq 0 ] && log "关键目录自检通过"
 
 ok "DIY2 is complete!"
 #------------------------------------------------end 修改脚本---------------
