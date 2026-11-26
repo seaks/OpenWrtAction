@@ -1,0 +1,13 @@
+<details> <summary> <b>openwrt-passwall-packages 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志.](https://github.com/Openwrt-Passwall/openwrt-passwall-packages/compare/65ae3f5ec70c9613ae3ec41ee6e9baecb1828ff9...a7e65d1d5d624f4b7910ba738ba7045fc2f534ce)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
+
+SHA|Author|Date|Message
+-|-|-|-
+a7e65d1|David Mandy|2026-11-24|v2ray-geosite: update to 202611222203 (#784)
+2d1d11a|David Mandy|2026-11-24|ci: compile test ignore smartdns Signed-off-by: David Mandy <smallprogramzhusir@gmail.com>
+71e5c6d|David Mandy|2026-11-24|ci: add sync smartdns to upstream action Signed-off-by: David Mandy <smallprogramzhusir@gmail.com>
+
+</details>
+

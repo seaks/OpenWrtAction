@@ -1,0 +1,14 @@
+<details> <summary> <b>openwrt-passwall 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志.](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/89ecdea8a44593c8055811c637b0c1a94d88453f...bc622894605a7b4d88028cb172e9807c57e6cdca)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
+
+SHA|Author|Date|Message
+-|-|-|-
+bc62289|A-BO|2026-11-23|luci: prevent line wrapping in client and server logs
+c3a2c54|A-BO|2026-11-23|luci: bump 26.11.23
+e1d9704|A-BO|2026-11-23|luci: force the Monoio legacy driver for the Shadow-TLS plugin
+57a6a94|A-BO|2026-11-23|luci: set probe user agent and update homepage test URLs
+
+</details>
+
