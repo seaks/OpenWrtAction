@@ -108,7 +108,7 @@ inject_feed() {
 
 # 1. 注入 rust
 #    源用 immortalwrt：主线 rust 与 immortalwrt master 的 API 可能不兼容
-inject_feed "https://github.com/immortalwrt/packages.git" "feeds/packages/lang" \
+inject_feed "https://github.com/openwrt/packages.git" "feeds/packages/lang" \
     "lang/rust"
 
 # 2. 替换 golang 为 sbwml 27.x
