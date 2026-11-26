@@ -1,11 +1,11 @@
 <details> <summary> <b>openwrt-passwall 更新日志 :rocket: </b> </summary>
 
-#### [:mega: 更新日志.](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/bc622894605a7b4d88028cb172e9807c57e6cdca...6d4b5671769c480382014f2eb7a77690cc8738c2)  
+#### [:mega: 更新日志.](https://github.com/Openwrt-Passwall/openwrt-passwall/compare/6d4b5671769c480382014f2eb7a77690cc8738c2...6dc121ea3545e01bff2c4dfa0551da5404c2dfa2)  
 :heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
 
 SHA|Author|Date|Message
 -|-|-|-
-6d4b567|A-BO|2026-11-26|luci: Show an error when a share URL is too long for a QR code
+6dc121e|A-BO|2026-11-27|luci: detect built-in transparent proxy support
 
 </details>
 
