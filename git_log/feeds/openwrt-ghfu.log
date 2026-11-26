@@ -1,0 +1,15 @@
+<details> <summary> <b>openwrt-ghfu 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志.](https://github.com/seaks/openwrt-ghfu/compare/f0a8fdcedff8bbe168bc54c5e111afe9e77b8ca8...9f239cfe568b6400482227cce2e033227ee7143b)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
+
+SHA|Author|Date|Message
+-|-|-|-
+9f239cf|Action Bot|2026-11-26|Revise firmware upgrade assistant message
+07dc67a|Action Bot|2026-11-26|Update ghfu.po
+2d4edca|Action Bot|2026-11-26|Update ghfu.po
+e598c40|Action Bot|2026-11-26|Update ghfu.pot
+2182c40|Action Bot|2026-11-26|Update ghfu.pot
+
+</details>
+
