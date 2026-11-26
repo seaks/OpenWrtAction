@@ -32,6 +32,17 @@
 #   本地编 master，用 sbwml 27.x：
 #     GOLANG_REPO=https://github.com/sbwml/packages_lang_golang \
 #     GOLANG_BRANCH=27.x ./diy_script/immortalwrt_part2.sh
+#
+# ============================================================================
+# ⚠️ 关于 GO_DEFAULT_VERSION
+# ----------------------------------------------------------------------------
+# 它是 lang/golang/golang-values.mk 里的一个静态 Makefile 变量，
+# 改 .config 不会让它变。所以切换 Go 版本后，本脚本仍然会打印
+#    GO_DEFAULT_VERSION:=1.26
+# 这是【正常的】，不代表切换失败。判断是否生效要看这几处：
+#    1) 本脚本打印的「该分支支持的 Go 版本」列表里有没有目标版本
+#    2) 本脚本打印的「CONFIG_GO_VERSION_*」行
+#    3) 编译完查二进制：go version -m <二进制> | head -2
 # ============================================================================
 
 set -e
@@ -41,8 +52,8 @@ set -o pipefail
 # 日志函数
 # ---------------------------------------------------------------------------
 log()  { echo ">>> $*"; }
-ok()   { echo "✅ $*"; }
-warn() { echo "⚠️  $*"; }
+ok()   { echo "OK   $*"; }
+warn() { echo "WARN $*"; }
 
 # ---------------------------------------------------------------------------
 # 定位 OpenWrtAction 仓库
@@ -161,11 +172,12 @@ inject_feed() {
         # 3. 伪装时间戳：取该路径最后一次 commit 时间
         file_time="$(cd temp_repo && git log -1 --format=%cd --date=unix -- "$p" 2>/dev/null || true)"
         file_time="${file_time:-$fallback_time}"
-        # 循环内实时取当前时间：Actions runner 时钟可能与上游 commit 时间有偏差
+        # 循环内实时取当前时间，并打印两边时间便于核对
         now_ts="$(date +%s)"
         disp_time="$(date -u -d "@$file_time" 2>/dev/null || echo '未知时间')"
+        log "  runner 时间：$(date -u)，上游 $p 时间戳：$file_time ($disp_time)"
         if [ "$file_time" -gt "$now_ts" ] 2>/dev/null; then
-            log "  $p 上游时间戳 $file_time ($disp_time) 晚于当前时间，钳制为 $now_ts"
+            log "  上游时间戳晚于当前时间，钳制为 $now_ts"
             file_time="$now_ts"
         fi
         # 只 touch 文件，不动目录：目录 mtime 变化会放大 make 的重扫范围
@@ -182,6 +194,30 @@ inject_feed() {
 }
 
 # ===========================================================================
+# Go 版本信息打印
+#
+# GO_DEFAULT_VERSION 是静态 Makefile 变量，改 .config 不会变，
+# 所以这里额外把 GO_VERSIONS 完整打出来，让人一眼看到有哪些版本可选。
+# ===========================================================================
+go_show_info() {
+    local golang_dir="feeds/packages/lang/golang"
+    local tag="${1:-golang}"
+
+    if [ ! -f "$golang_dir/golang-values.mk" ]; then
+        warn "[$tag] 未找到 $golang_dir/golang-values.mk"
+        return 0
+    fi
+
+    log "[$tag] golang-values.mk 关键行："
+    grep -E "^GO_(DEFAULT_VERSION|DEFAULT_PKGVERSION|VERSIONS)" \
+        "$golang_dir/golang-values.mk" 2>/dev/null | sed 's/^/       /' || true
+
+    if [ -d "$golang_dir" ]; then
+        log "[$tag] 存在的版本目录：$(ls -d "$golang_dir"/golang1.* 2>/dev/null | xargs -n1 basename 2>/dev/null | tr '\n' ' ')"
+    fi
+}
+
+# ===========================================================================
 # Go 版本切换
 #
 # 不写死 CONFIG_GO_VERSION_1_27：不同 golang 包的 Config.in 写法可能是
@@ -189,25 +225,35 @@ inject_feed() {
 # 这里让 scripts/config 自己按值找符号，找不到只警告不中断。
 #
 # ⚠️ 所有 grep 都带 || true：pipefail 下 grep 无匹配会返回 1，
-#    会把整个脚本带崩（上一版就是这么挂在收尾的）。
+#    会把整个脚本带崩。
+# ⚠️ 切换成功也不会改变 GO_DEFAULT_VERSION 的输出，那是个静态变量。
 # ===========================================================================
 go_select() {
     local want="$1"
     local golang_dir="feeds/packages/lang/golang"
 
     if [ ! -f "$golang_dir/golang-values.mk" ]; then
-        warn "未找到 $golang_dir/golang-values.mk，跳过 Go 版本切换"
+        warn "未找到 golang-values.mk，跳过 Go 版本切换"
         return 0
     fi
 
-    local supported raw
+    # 1. 先看清有哪些版本
+    go_show_info "切换前"
+
+    local raw supported
     raw="$(sed -n 's/^GO_VERSIONS[[:space:]]*:*=\(.*\)$/\1/p' "$golang_dir/golang-values.mk" 2>/dev/null || true)"
     supported="$(printf '%s' "$raw" | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+$' || true)"
-    log "该分支支持的 Go 版本：$(printf '%s' "$supported" | tr '\n' ' ')"
 
-    if [ -n "$supported" ] && ! printf '%s\n' "$supported" | grep -qx "$want"; then
-        warn "Go $want 不在支持列表内，保持默认版本"
-        return 0
+    if [ -z "$supported" ]; then
+        warn "没能从 GO_VERSIONS 解析出版本列表，改为直接尝试切换"
+    else
+        log "该分支登记的 Go 版本：$(printf '%s' "$supported" | tr '\n' ' ')"
+        if ! printf '%s\n' "$supported" | grep -qx "$want"; then
+            warn "Go $want 不在 GO_VERSIONS 登记列表内"
+            warn "该分支只有上面那些版本，强行切换很可能不生效"
+            warn "建议：留在默认版本，或确认 25.12 分支是否已合入 1.27"
+            return 0
+        fi
     fi
 
     if [ ! -x scripts/config ]; then
@@ -215,9 +261,15 @@ go_select() {
         return 0
     fi
 
-    # 按值反查符号名（grep 无匹配时 || true 兜住）
+    # 2. 按值反查符号名
     local sym symbol_list
     symbol_list="$(scripts/config --symbols 2>/dev/null | tr ' ' '\n' | grep -E '^CONFIG_GO_VERSION' || true)"
+
+    if [ -z "$symbol_list" ]; then
+        warn "scripts/config --symbols 里没有任何 CONFIG_GO_VERSION_*"
+        warn "说明当前 .config 还没生成过 Go 相关选项，先跑一次 make defconfig 再看"
+        return 0
+    fi
 
     sym="$(printf '%s\n' "$symbol_list" | while read -r s; do
               [ -z "$s" ] && continue
@@ -230,17 +282,25 @@ go_select() {
         sym="CONFIG_GO_VERSION_$(printf '%s' "$want" | tr '.' '_')"
         if ! printf '%s\n' "$symbol_list" | grep -qx "$sym"; then
             warn "未找到 Go $want 对应的配置符号，保持默认版本"
+            log "当前 .config 中的 GO_VERSION 相关行："
+            grep -E "^CONFIG_GO_VERSION" .config 2>/dev/null | sed 's/^/       /' || true
             return 0
         fi
     fi
 
+    # 3. 执行切换
     log "切换到 Go $want（符号：$sym）"
     if scripts/config --enable "${sym#CONFIG_}" 2>/dev/null; then
         ok "Go 版本已设为 $want"
-        grep -E "^CONFIG_GO_VERSION" .config 2>/dev/null | head -5 || true
+    elif scripts/config --set-str GO_VERSION "$want" 2>/dev/null; then
+        ok "Go 版本已设为 $want（字符串形式）"
     else
         warn "切换失败，保持默认版本"
+        return 0
     fi
+
+    log "切换后 .config 中的 GO_VERSION 相关行："
+    grep -E "^CONFIG_GO_VERSION" .config 2>/dev/null | sed 's/^/       /' || true
 }
 
 # ===========================================================================
@@ -272,8 +332,8 @@ fi
 # 2. golang
 #    ⚠️ ImmortalWrt 25.12 的 lang/golang 已是新版结构：
 #       golang-bootstrap + golang-version.mk + golang1.26/golang1.27/...
-#       golang-values.mk 的 GO_DEFAULT_VERSION 决定 golang/host 指向谁
-#       （25.12 为 1.26），各 Go 包无需改依赖名。
+#       GO_DEFAULT_VERSION 决定 golang/host 指向谁（25.12 为 1.26），
+#       各 Go 包无需改依赖名。
 #    ⚠️ 所以稳定分支默认【不替换】，沿用官方配套版本最稳。
 # ===========================================================================
 if [ -n "${GOLANG_REPO:-}" ]; then
@@ -283,23 +343,20 @@ if [ -n "${GOLANG_REPO:-}" ]; then
     rm -rf feeds/packages/lang/golang
     if git clone --depth 1 "$GOLANG_REPO" -b "$GOLANG_BRANCH" feeds/packages/lang/golang; then
         ok "golang 替换完成（$GOLANG_BRANCH）"
+        go_show_info "替换后"
     else
         warn "clone golang 失败，尝试恢复官方版本"
         rm -rf feeds/packages/lang/golang
         if ./scripts/feeds update -p packages && ./scripts/feeds install golang; then
             ok "已恢复官方 golang"
         else
-            echo "❌ golang 恢复失败，请手动执行：./scripts/feeds update -a && ./scripts/feeds install -a" >&2
+            echo "ERROR golang 恢复失败，请手动执行：./scripts/feeds update -a && ./scripts/feeds install -a" >&2
             exit 1
         fi
     fi
 else
     log "未设置 GOLANG_REPO，沿用 ImmortalWrt 自带 golang"
-    if [ -f feeds/packages/lang/golang/golang-values.mk ]; then
-        grep -E "^GO_DEFAULT_VERSION" feeds/packages/lang/golang/golang-values.mk | head -1 || true
-    else
-        warn "未找到 golang-values.mk，请确认 feeds 已正确拉取"
-    fi
+    go_show_info "当前"
 fi
 
 # inject_feed "https://github.com/immortalwrt/luci.git" "feeds/luci/modules" \
@@ -458,14 +515,11 @@ if [ -n "${GO_VERSION:-}" ]; then
     go_select "$GO_VERSION"
 else
     log "未设置 GO_VERSION，沿用默认 Go 版本"
-    if [ -f feeds/packages/lang/golang/golang-values.mk ]; then
-        grep -E "^GO_DEFAULT_VERSION" feeds/packages/lang/golang/golang-values.mk | head -1 || true
-    fi
+    go_show_info "当前"
 fi
 
 # ---------------------------------------------------------------------------
 # 收尾检查
-#   feeds/bandi/.git 这类是 src-git 拉下来自带的，属正常，不报
 #   ⚠️ grep 过滤后无结果会返回 1，pipefail 下会带崩脚本，
 #      所以先存进变量再判断，绝不能直接接进 while
 # ---------------------------------------------------------------------------
@@ -480,8 +534,32 @@ else
     log "feeds 子目录无 Git 残留"
 fi
 
+# feed 根目录按 feeds.conf 自动发现，不写死名字（自定义 feed 较多）
+FEED_ROOTS="$(sed -n 's/^src-\(git\|git-commit\|link\|local\)[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^[:space:];]*\).*$/\2/p' \
+              feeds.conf feeds.conf.default 2>/dev/null \
+              | sed 's|^\./||; s|/$||' | sort -u || true)"
+
+EMPTY_FEED=0
+for r in $FEED_ROOTS; do
+    if [ ! -d "$r" ]; then
+        warn "feed 目录缺失：$r"
+        EMPTY_FEED=1
+    elif [ -z "$(ls -A "$r" 2>/dev/null || true)" ]; then
+        warn "feed 目录为空：$r"
+        EMPTY_FEED=1
+    fi
+done
+if [ "$EMPTY_FEED" -eq 0 ] && [ -n "$FEED_ROOTS" ]; then
+    log "feed 目录自检通过（$(printf '%s' "$FEED_ROOTS" | tr ' ' '\n' | grep -c . || true) 个）"
+fi
+
+# 关键目录：路径按实际 feed 归属写
+#   luci-base 属于 packages feed（feeds/packages/libs/luci-base），
+#   不在 luci feed，早期版本写错这里导致误报
 MISSING=0
-for d in feeds/packages/lang/rust feeds/packages/lang/golang feeds/luci/luci-base; do
+for d in feeds/packages/lang/rust \
+         feeds/packages/lang/golang \
+         feeds/packages/libs/luci-base; do
     if [ ! -e "$d" ]; then
         warn "关键目录缺失：$d"
         MISSING=1
