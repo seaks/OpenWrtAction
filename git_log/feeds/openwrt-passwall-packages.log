@@ -1,0 +1,13 @@
+<details> <summary> <b>openwrt-passwall-packages 更新日志 :rocket: </b> </summary>
+
+#### [:mega: 更新日志.](https://github.com/Openwrt-Passwall/openwrt-passwall-packages/compare/a7e65d1d5d624f4b7910ba738ba7045fc2f534ce...f941f174da66f7229814601a2f0c67f2be52e039)  
+:heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
+
+SHA|Author|Date|Message
+-|-|-|-
+f941f17|David Mandy|2026-11-27|sing-box: update to 1.14.5 (#786)
+7978232|David Mandy|2026-11-27|v2ray-geoip: update to 202611260018 (#787)
+e027d1b|David Mandy|2026-11-27|v2ray-geosite: update to 202611262204 (#785)
+
+</details>
+

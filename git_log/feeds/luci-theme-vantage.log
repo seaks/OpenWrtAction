@@ -1,11 +1,11 @@
 <details> <summary> <b>luci-theme-vantage 更新日志 :rocket: </b> </summary>
 
-#### [:mega: 更新日志.](https://github.com/anothaDev/luci-theme-vantage/compare/fd2440318ed295b9979094f83dc96c91c7ea72dc...17d46e2dc6d6de2e16b08777acc15bb315f4bb34)  
+#### [:mega: 更新日志.](https://github.com/anothaDev/luci-theme-vantage/compare/17d46e2dc6d6de2e16b08777acc15bb315f4bb34...85b66dbd14841d29dc80bcbc18dedfcb1fc6c065)  
 :heavy_exclamation_mark: 列表仅显示最新的 15 条提交日志。  
 
 SHA|Author|Date|Message
 -|-|-|-
-17d46e2|anothaDev|2026-11-26|After 1.2.1: an access point leaves out the other VLANs of its uplink's wire, its own address stands, mesh peers are no clients (#176)
+85b66db|anothaDev|2026-11-27|Review before 1.2.2: mesh peers leave every client count, a short card reaches down to the wide one under it (#177)
 
 </details>
 
