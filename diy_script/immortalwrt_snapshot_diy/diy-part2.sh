@@ -193,7 +193,7 @@ cat << 'EOF' > files/etc/uci-defaults/99-custom-ssh-config
 /etc/init.d/sshd stop 2>/dev/null
 
 # --- 2. 配置 Dropbear (UCI) ---
-uci set dropbear.@dropbear[0].Port='2222'
+uci set dropbear.@dropbear[0].Port='22'
 uci commit dropbear
 
 # --- 3. 配置 OpenSSH (sshd_config) ---
